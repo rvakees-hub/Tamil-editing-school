@@ -63,7 +63,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
   }
 
   return (
-    <section id="courses-section" ref={sectionRef} className="py-32 bg-brand-black relative overflow-hidden">
+    <section id="courses-section" ref={sectionRef} className="pt-12 pb-32 bg-brand-black relative overflow-hidden">
       {/* Background Decor */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-brand-blue/5 blur-[120px] rounded-full pointer-events-none" />
       
@@ -96,10 +96,14 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
               }`}
             >
               {/* Image Background */}
-              <div className="absolute inset-0 z-0">
+              <div className="absolute inset-0 z-0 bg-gray-900">
                 <img 
                   src={course.image} 
                   alt={course.title} 
+                  loading="lazy"
+                  decoding="async"
+                  width="800"
+                  height="1200"
                   className={`w-full h-full object-cover transition-transform duration-1000 ease-in-out ${isPro ? 'scale-125 group-hover:scale-135' : 'group-hover:scale-110'}`} 
                 />
                 

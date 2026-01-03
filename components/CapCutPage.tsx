@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowLeft, ArrowRight, PlayCircle, Smartphone, Zap, TrendingUp, Instagram, Layers, Palette, Music, Type, CheckCircle2, Scissors, Monitor, Film, CreditCard, Lock, ShieldCheck, Check, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, PlayCircle, Zap, CheckCircle2, Scissors, Monitor, Film, CreditCard, Lock, ShieldCheck, Check, ChevronDown, Award, X, User, Mail, Phone, Music, Sparkles, Layers, Activity, Clock } from 'lucide-react';
+import { TRUSTED_CREATORS } from '../constants';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -46,6 +47,30 @@ const CAPCUT_SYLLABUS = [
     description: "Deep dive into Auto-Cutout, AI Effects, Advanced Transitions, and vocal isolation.", 
     icon: Zap 
   },
+  {
+    id: 7,
+    title: "Audio Editing Made Easy",
+    description: "Add music, voiceovers, sound effects, and balance audio like a pro.",
+    icon: Music
+  },
+  {
+    id: 8,
+    title: "AI Tools & Smart Editing Features",
+    description: "Use CapCut AI for auto captions, smart effects, and faster editing.",
+    icon: Sparkles
+  },
+  {
+    id: 9,
+    title: "Masking & Visual Effects",
+    description: "Create cinematic looks, overlays, and professional effects using masking.",
+    icon: Layers
+  },
+  {
+    id: 10,
+    title: "Keyframe Animation & Motion Effects",
+    description: "Add smooth zooms, movements, and animations using keyframes.",
+    icon: Activity
+  }
 ];
 
 const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
@@ -54,12 +79,23 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
   const subRef = useRef<HTMLParagraphElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const curriculumRef = useRef<HTMLDivElement>(null);
+  const certificateRef = useRef<HTMLDivElement>(null);
   const pricingRef = useRef<HTMLDivElement>(null);
+  
   const [timeLeft, setTimeLeft] = useState('23:59:59');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
 
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0);
+
+    // Scroll Handler for Sticky Header
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100);
+    };
+    window.addEventListener('scroll', handleScroll);
 
     // Countdown Logic
     const timer = setInterval(() => {
@@ -147,8 +183,23 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
                 }
             });
         });
+        
+        // 4. Certificate Animation
+        if (certificateRef.current) {
+            gsap.from(certificateRef.current.children, {
+                y: 50,
+                opacity: 0,
+                stagger: 0.2,
+                duration: 0.8,
+                ease: 'power3.out',
+                scrollTrigger: {
+                    trigger: certificateRef.current,
+                    start: 'top 70%',
+                }
+            });
+        }
 
-        // 4. Pricing Card Animation
+        // 6. Pricing Card Animation
         gsap.from(pricingRef.current, {
             y: 50,
             opacity: 0,
@@ -166,20 +217,56 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
     return () => {
         ctx.revert();
         clearInterval(timer);
+        window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
+  const handleEnrollClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Simulate submission
+    console.log("Form Submitted:", formData);
+    alert("Thanks for enrolling! We will contact you shortly to finalize the payment.");
+    setIsModalOpen(false);
+    setFormData({ name: '', email: '', phone: '' });
+  };
+
   return (
     <div ref={containerRef} className="min-h-screen bg-brand-black overflow-x-hidden font-sans text-white">
-      {/* Navigation Header */}
-      <header className="fixed top-0 left-0 w-full z-50 px-4 md:px-8 py-6 flex items-center justify-between pointer-events-none">
-        <button 
-            onClick={onBack}
-            className="pointer-events-auto flex items-center gap-2 px-5 py-2.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 transition-all hover:scale-105 group shadow-2xl"
-        >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-brand-blue" /> 
-            <span className="font-medium text-sm">Back to Hub</span>
-        </button>
+      {/* Navigation Header with Sticky Capability */}
+      <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-black/90 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl' : 'py-6 pointer-events-none'}`}>
+        <div className="container mx-auto px-4 md:px-8 flex items-center justify-between pointer-events-auto">
+          <button 
+              onClick={onBack}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full transition-all group ${isScrolled ? 'bg-transparent text-white hover:text-brand-blue pl-0' : 'bg-black/60 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 hover:scale-105 shadow-2xl'}`}
+          >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-brand-blue" /> 
+              <span className={`font-medium text-sm ${isScrolled ? 'hidden md:inline' : 'inline'}`}>Back to Hub</span>
+          </button>
+
+          {/* Sticky Timer & CTA (Visible on Scroll) */}
+          <div className={`flex items-center gap-3 md:gap-6 transition-all duration-500 transform ${isScrolled ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'}`}>
+             <div className="flex items-center gap-3 bg-white/5 px-4 py-1.5 rounded-lg border border-white/10">
+                 <Clock className="w-3 h-3 text-brand-blue animate-pulse" />
+                 <span className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest hidden sm:inline">Offer closes in:</span>
+                 <span className="font-mono text-sm md:text-base font-bold text-white tabular-nums">{timeLeft}</span>
+             </div>
+             <button 
+                onClick={handleEnrollClick}
+                className="bg-brand-blue text-black px-5 py-2 rounded-full font-bold text-sm hover:bg-white transition-colors shadow-[0_0_15px_rgba(26,193,221,0.4)]"
+             >
+                Enroll Now
+             </button>
+          </div>
+        </div>
       </header>
 
       {/* Hero Section - Redesigned to match Main Page */}
@@ -194,22 +281,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
              <div className="hero-bg-gradient absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-900/20 rounded-full blur-[120px] pointer-events-none" />
         </div>
         
-        {/* Top Bar - Clean & Minimal (Urgency Timer) */}
-        <div className="w-full flex justify-center pt-24 md:pt-16 z-40 relative pointer-events-none">
-            <div className="glass-card px-6 py-2 rounded-full flex items-center gap-4 animate-fade-in-down pointer-events-auto">
-                <div className="flex items-center gap-2">
-                     <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-blue"></span>
-                     </span>
-                     <span className="text-xs font-medium text-gray-300 uppercase tracking-wider">Registration Closing Soon</span>
-                </div>
-                <div className="h-4 w-[1px] bg-white/10"></div>
-                <span className="font-mono text-sm font-bold text-white">{timeLeft}</span>
-            </div>
-        </div>
-        
-        <div className="container mx-auto px-4 lg:px-8 flex flex-col items-center justify-center flex-grow z-10 relative mt-0 md:-mt-10">
+        <div className="container mx-auto px-4 lg:px-8 flex flex-col items-center justify-center flex-grow z-10 relative mt-0 md:-mt-10 pt-20">
             <div className="max-w-5xl mx-auto text-center">
                 
                 <div className="hero-tagline flex items-center justify-center gap-3 mb-6">
@@ -242,33 +314,87 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
                 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
                     <button 
-                      onClick={() => pricingRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                      className="hero-btn group relative px-8 py-4 bg-white text-black font-bold rounded-full overflow-hidden hover:scale-105 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(255,255,255,0.5)]"
+                      onClick={handleEnrollClick}
+                      className="hero-btn group relative px-8 py-4 bg-brand-blue text-black font-bold rounded-full overflow-hidden hover:scale-105 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(26,193,221,0.5)]"
                     >
                         <span className="relative z-10 flex items-center gap-2">
                             Enroll Now - LKR 9,999 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </span>
                     </button>
-                    
-                    <button 
-                      onClick={() => curriculumRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                      className="hero-btn flex items-center gap-2 px-8 py-4 rounded-full text-white hover:text-brand-blue transition-colors font-medium backdrop-blur-sm group"
-                    >
-                        <PlayCircle className="w-12 h-12 text-white/20 group-hover:text-brand-blue group-hover:scale-110 transition-all" />
-                        <div className="flex flex-col items-start text-sm">
-                            <span className="text-gray-400 text-xs uppercase tracking-wide">Watch Syllabus</span>
-                            <span>See What You'll Learn</span>
-                        </div>
-                    </button>
+                    {/* Removed 'Watch Syllabus' button as requested */}
                 </div>
             </div>
         </div>
 
         {/* Bottom Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-bounce pointer-events-none">
-            <span className="text-[10px] uppercase tracking-widest text-gray-500">Scroll Down</span>
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+       
+      </section>
+
+      {/* TRAINERS WORKED WITH SECTION - Moved to Second Section */}
+      <section className="relative py-24 overflow-hidden border-t border-white/5 bg-brand-black">
+        <div className="container mx-auto px-4 mb-16 text-center relative z-10">
+          <h3 className="text-sm font-bold tracking-[0.2em] text-brand-blue uppercase mb-3">
+            Industry Experts
+          </h3>
+          <h2 className="text-4xl md:text-5xl font-serif text-white mb-4">
+            Trainers worked with
+          </h2>
+          <p className="text-gray-400 max-w-lg mx-auto">
+            Learn from the experience of editors who have worked with top creators.
+          </p>
         </div>
+
+        {/* Infinite Scroll Marquee */}
+        <div className="relative w-full overflow-hidden">
+          <div 
+              className="flex w-max items-center animate-marquee hover:[animation-play-state:paused] will-change-transform"
+              style={{ 
+                  animation: 'marquee 60s linear infinite',
+                  width: 'max-content'
+              }}
+          >
+            {/* Triple the list to ensure smooth infinite loop on wide screens */}
+            {[...TRUSTED_CREATORS, ...TRUSTED_CREATORS, ...TRUSTED_CREATORS].map((creator, index) => (
+              <div 
+                key={`creator-${index}`}
+                className="mx-4 relative flex-shrink-0"
+              >
+                {/* Card Container */}
+                <div className="
+                  w-[280px] h-[400px] md:w-[320px] md:h-[460px] 
+                  rounded-3xl overflow-hidden relative 
+                  border border-white/10
+                  bg-white/5 backdrop-blur-sm
+                  group
+                ">
+                  {/* Image */}
+                  <img 
+                    src={creator.image} 
+                    alt={creator.name} 
+                    loading="lazy"
+                    decoding="async"
+                    width="320"
+                    height="460"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  
+                  {/* Subtle Gradient Overlay for Depth */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <style>{`
+            @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-33.33%); }
+            }
+            .animate-marquee {
+            animation: marquee 60s linear infinite;
+            }
+        `}</style>
       </section>
 
       {/* Curriculum Preview - Animated Timeline */}
@@ -355,12 +481,87 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
                             </div>
                         ))}
                     </div>
+
+                    {/* NEW CTA: After Syllabus */}
+                    <div className="mt-16 flex justify-center">
+                        <button 
+                            onClick={handleEnrollClick}
+                            className="group relative px-8 py-4 bg-brand-blue text-black font-bold rounded-full overflow-hidden hover:scale-105 transition-all duration-300"
+                        >
+                            <span className="relative z-10 flex items-center gap-2">
+                                Start Learning Today <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            </span>
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>
       </section>
 
-      {/* NEW PAYMENT SECTION */}
+      {/* NEW CERTIFICATE SECTION */}
+      <section ref={certificateRef} className="py-24 bg-black relative overflow-hidden">
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                {/* Text Side */}
+                <div className="lg:w-1/2 text-center lg:text-left">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-blue/10 border border-brand-blue/20 text-brand-blue text-xs font-bold uppercase tracking-wider mb-6">
+                        <Award className="w-4 h-4" /> Certification
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-serif text-white mb-6">
+                        Earn Your <span className="italic text-brand-blue">Certificate</span>
+                    </h2>
+                    <p className="text-gray-400 text-lg leading-relaxed mb-8">
+                        Stand out in the job market. Upon successful completion of the course and projects, you'll receive a signed certificate validating your proficiency in mobile video editing.
+                    </p>
+                    
+                    <ul className="space-y-4 text-left max-w-md mx-auto lg:mx-0 mb-10">
+                        <li className="flex items-center gap-3 text-gray-300">
+                            <CheckCircle2 className="w-5 h-5 text-brand-blue flex-shrink-0" />
+                            <span>Verified by Tamil Editing School</span>
+                        </li>
+                        <li className="flex items-center gap-3 text-gray-300">
+                            <CheckCircle2 className="w-5 h-5 text-brand-blue flex-shrink-0" />
+                            <span>Add to your LinkedIn profile</span>
+                        </li>
+                        <li className="flex items-center gap-3 text-gray-300">
+                            <CheckCircle2 className="w-5 h-5 text-brand-blue flex-shrink-0" />
+                            <span>Showcase to potential clients</span>
+                        </li>
+                    </ul>
+
+                    {/* NEW CTA: After Certificate Info */}
+                    <div className="flex justify-center lg:justify-start">
+                        <button 
+                            onClick={handleEnrollClick}
+                            className="px-8 py-4 bg-brand-blue text-black font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(26,193,221,0.3)] flex items-center gap-2"
+                        >
+                            Get Certified Now <ArrowRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Image Side */}
+                <div className="lg:w-1/2 w-full relative group perspective-1000">
+                     <div className="absolute -inset-1 bg-gradient-to-r from-brand-blue to-cyan-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                     <div className="relative rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-white/5 transform transition-transform duration-700 group-hover:rotate-y-2 group-hover:rotate-x-2">
+                        <img 
+                            src="https://res.cloudinary.com/duhqg4u4k/image/upload/v1767352286/Green_Modern_Event_Completion_Certificate_kipdka.png" 
+                            alt="Course Certificate" 
+                            className="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
+                        />
+                        {/* Shine effect */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+                     </div>
+                </div>
+            </div>
+        </div>
+      </section>
+
+      {/* PAYMENT SECTION */}
       <section className="py-24 relative overflow-hidden bg-gradient-to-b from-brand-black to-[#080808]">
         {/* Glow Effect */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-blue/5 rounded-full blur-[100px] pointer-events-none"></div>
@@ -422,8 +623,11 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
                         </div>
                     </div>
 
-                    {/* CTA Button */}
-                    <button className="w-full group relative px-8 py-5 bg-brand-blue text-white font-bold text-lg rounded-xl overflow-hidden shadow-[0_0_20px_rgba(26,193,221,0.4)] hover:shadow-[0_0_40px_rgba(26,193,221,0.6)] transition-all duration-300 hover:scale-[1.02]">
+                    {/* CTA Button with Click Handler */}
+                    <button 
+                        onClick={handleEnrollClick}
+                        className="w-full group relative px-8 py-5 bg-brand-blue text-black font-bold text-lg rounded-xl overflow-hidden shadow-[0_0_20px_rgba(26,193,221,0.4)] hover:shadow-[0_0_40px_rgba(26,193,221,0.6)] transition-all duration-300 hover:scale-[1.02]"
+                    >
                         <span className="relative z-10 flex items-center justify-center gap-2">
                             Enroll Now <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </span>
@@ -446,14 +650,103 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
                     <div className="mt-6 flex items-center justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all">
                         <div className="h-8 px-2 bg-white rounded flex items-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="h-4" /></div>
                         <div className="h-8 px-2 bg-white rounded flex items-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="h-3" /></div>
-                        <div className="h-8 px-2 bg-white rounded flex items-center font-bold text-xs text-black">UPI</div>
-                        <div className="h-8 px-2 bg-white rounded flex items-center font-bold text-xs text-black">GPay</div>
+                      
                     </div>
 
                 </div>
             </div>
         </div>
       </section>
+
+      {/* ENROLLMENT MODAL POPUP */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                onClick={() => setIsModalOpen(false)}
+            ></div>
+            
+            {/* Modal Content */}
+            <div className="relative z-10 w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                {/* Header */}
+                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-brand-blue/5 to-transparent flex justify-between items-center">
+                    <div>
+                        <h3 className="text-xl font-bold text-white">Secure Your Spot</h3>
+                        <p className="text-xs text-brand-blue mt-1 font-medium">Limited Seats Remaining</p>
+                    </div>
+                    <button 
+                        onClick={() => setIsModalOpen(false)}
+                        className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+                
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-400 ml-1">Full Name</label>
+                        <div className="relative group">
+                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-blue transition-colors" />
+                            <input 
+                                type="text" 
+                                name="name"
+                                required
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                placeholder="Enter your full name"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-brand-blue/50 focus:bg-white/10 transition-all"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-400 ml-1">Email Address</label>
+                        <div className="relative group">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-blue transition-colors" />
+                            <input 
+                                type="email" 
+                                name="email"
+                                required
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                placeholder="Enter your email"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-brand-blue/50 focus:bg-white/10 transition-all"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-400 ml-1">WhatsApp Number</label>
+                        <div className="relative group">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-brand-blue transition-colors" />
+                            <input 
+                                type="tel" 
+                                name="phone"
+                                required
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                                placeholder="e.g. 077 123 4567"
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:border-brand-blue/50 focus:bg-white/10 transition-all"
+                            />
+                        </div>
+                    </div>
+                    
+                    <button 
+                        type="submit"
+                        className="w-full mt-4 bg-brand-blue hover:bg-cyan-400 text-black font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(26,193,221,0.3)] flex items-center justify-center gap-2"
+                    >
+                        Proceed to Payment <ArrowRight className="w-4 h-4" />
+                    </button>
+                    
+                    <p className="text-center text-[10px] text-gray-500">
+                        By clicking above, you agree to receive course updates via email/WhatsApp.
+                    </p>
+                </form>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -19,7 +19,7 @@ const TrustedBy: React.FC = () => {
       {/* Infinite Scroll Marquee */}
       <div className="relative w-full overflow-hidden">
         <div 
-            className="flex w-max items-center animate-marquee hover:[animation-play-state:paused]"
+            className="flex w-max items-center animate-marquee hover:[animation-play-state:paused] will-change-transform"
             style={{ 
                 animation: 'marquee 60s linear infinite',
                 width: 'max-content'
@@ -43,8 +43,11 @@ const TrustedBy: React.FC = () => {
                 <img 
                   src={creator.image} 
                   alt={creator.name} 
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   loading="lazy"
+                  decoding="async"
+                  width="320"
+                  height="460"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 
                 {/* Subtle Gradient Overlay for Depth (Reduced since text is removed) */}

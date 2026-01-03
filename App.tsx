@@ -1,10 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Hero from './components/Hero';
 import HowItWorks from './components/HowItWorks';
 import TrustedBy from './components/TrustedBy';
 import Courses from './components/Courses';
-import CapCutPage from './components/CapCutPage';
 import Footer from './components/Footer';
+
+// Lazy load the CapCut page to reduce initial bundle size
+const CapCutPage = React.lazy(() => import('./components/CapCutPage'));
+
+// Loading fallback for the lazy component
+const PageLoader = () => (
+  <div className="min-h-screen bg-brand-black flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-white/10 border-t-brand-blue rounded-full animate-spin"></div>
+      <p className="text-gray-400 text-sm font-mono animate-pulse">Loading Course Data...</p>
+    </div>
+  </div>
+);
 
 const App: React.FC = () => {
   // Simple state-based routing
@@ -18,12 +30,14 @@ const App: React.FC = () => {
   const handleCourseSelection = (courseId: string) => {
     if (courseId === 'capcut') {
       setCurrentView('capcut');
+      window.scrollTo(0, 0);
     }
     // Future: Handle other course IDs
   };
 
   const handleBackToHome = () => {
     setCurrentView('home');
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -37,7 +51,9 @@ const App: React.FC = () => {
             <HowItWorks />
           </>
         ) : (
-          <CapCutPage onBack={handleBackToHome} />
+          <Suspense fallback={<PageLoader />}>
+            <CapCutPage onBack={handleBackToHome} />
+          </Suspense>
         )}
       </main>
       <Footer />

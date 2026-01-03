@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, ChevronDown, PlayCircle } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -49,12 +48,6 @@ const Hero: React.FC = () => {
         { y: 30, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' },
         '-=0.8'
-      )
-      .fromTo(
-        '.hero-btn',
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.1, duration: 0.6, ease: 'back.out(1.7)' },
-        '-=0.6'
       );
 
       // Parallax effect on scroll
@@ -72,13 +65,6 @@ const Hero: React.FC = () => {
 
     return () => ctx.revert();
   }, []);
-
-  const scrollToCourses = () => {
-    const element = document.getElementById('courses-section');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   return (
     <div ref={containerRef} className="relative min-h-[95vh] flex flex-col pt-0 overflow-hidden bg-brand-black">
@@ -136,36 +122,9 @@ const Hero: React.FC = () => {
 
           <p ref={subRef} className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto font-sans leading-relaxed mt-2 mb-10">
             From viral <span className="text-white font-semibold">Reels</span> to cinematic <span className="text-white font-semibold">Films</span>. 
-            Join the elite community of Tamil editors and master the art of Video Editing.
+            Join the elite community of Tamil editors and master the art of storytelling.
           </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
-            <button 
-              onClick={scrollToCourses}
-              className="hero-btn group relative px-8 py-4 bg-white text-black font-bold rounded-full overflow-hidden hover:scale-105 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(255,255,255,0.5)]"
-            >
-              <span className="relative z-10 flex items-center gap-2">
-                Start Learning <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </button>
-            <button 
-              onClick={scrollToCourses}
-              className="hero-btn flex items-center gap-2 px-8 py-4 rounded-full text-white hover:text-brand-blue transition-colors font-medium backdrop-blur-sm group"
-            >
-              <PlayCircle className="w-12 h-12 text-white/20 group-hover:text-brand-blue group-hover:scale-110 transition-all" />
-              <div className="flex flex-col items-start text-sm">
-                  <span className="text-gray-400 text-xs uppercase tracking-wide">Watch Trailer</span>
-                  <span>See What's Possible</span>
-              </div>
-            </button>
-          </div>
         </div>
-      </div>
-      
-      {/* Bottom Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-bounce">
-        <span className="text-[10px] uppercase tracking-widest text-gray-500">Scroll Down</span>
-        <ChevronDown className="w-4 h-4 text-gray-500" />
       </div>
     </div>
   );
