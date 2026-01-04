@@ -27,11 +27,55 @@ const App: React.FC = () => {
   useEffect(() => {
     // Smooth scroll behavior for anchor links
     document.documentElement.style.scrollBehavior = 'smooth';
+
+    // --- ROUTING LOGIC START ---
+    // This fixes the issue where deep links or subdomains wouldn't load the CapCut page
+    const handleRouting = () => {
+      const params = new URLSearchParams(window.location.search);
+      const pageParam = params.get('page');
+      const hash = window.location.hash;
+      const hostname = window.location.hostname;
+
+      // Check for ?page=capcut OR #capcut OR subdomain 'capcut.'
+      if (
+        pageParam === 'capcut' || 
+        hash === '#capcut' || 
+        hostname.startsWith('capcut.')
+      ) {
+        setCurrentView('capcut');
+      } else {
+        // Only revert to home if explicitly navigating back or loading root
+        if (pageParam !== 'capcut' && hash !== '#capcut' && !hostname.startsWith('capcut.')) {
+             setCurrentView('home');
+        }
+      }
+    };
+
+    // Run on mount
+    handleRouting();
+
+    // Run on back/forward button
+    window.addEventListener('popstate', handleRouting);
+    return () => window.removeEventListener('popstate', handleRouting);
+    // --- ROUTING LOGIC END ---
   }, []);
+
+  // Helper to update URL without page reload
+  const updateUrl = (view: 'home' | 'capcut') => {
+    const newUrl = new URL(window.location.href);
+    if (view === 'capcut') {
+      newUrl.searchParams.set('page', 'capcut');
+    } else {
+      newUrl.searchParams.delete('page');
+    }
+    // Push state so back button works
+    window.history.pushState({}, '', newUrl);
+  };
 
   const handleCourseSelection = (courseId: string) => {
     if (courseId === 'capcut') {
       setCurrentView('capcut');
+      updateUrl('capcut');
       window.scrollTo(0, 0);
     }
     // Future: Handle other course IDs
@@ -40,12 +84,14 @@ const App: React.FC = () => {
   const handleBackToHome = () => {
     setCurrentView('home');
     setIsModalOpen(false);
+    updateUrl('home');
     window.scrollTo(0, 0);
   };
 
   const handleFooterEnroll = () => {
     setCurrentView('capcut');
     setIsModalOpen(true);
+    updateUrl('capcut');
     window.scrollTo(0, 0);
   };
 
