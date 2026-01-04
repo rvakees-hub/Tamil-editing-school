@@ -552,6 +552,8 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                         <img 
                             src="https://res.cloudinary.com/duhqg4u4k/image/upload/v1767352286/Green_Modern_Event_Completion_Certificate_kipdka.png" 
                             alt="Course Certificate" 
+                            loading="lazy" 
+                            decoding="async"
                             className="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
                         />
                         {/* Shine effect */}
@@ -649,8 +651,8 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                     
                     {/* Payment Methods Visual */}
                     <div className="mt-6 flex items-center justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all">
-                        <div className="h-8 px-2 bg-white rounded flex items-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" className="h-4" /></div>
-                        <div className="h-8 px-2 bg-white rounded flex items-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" className="h-3" /></div>
+                        <div className="h-8 px-2 bg-white rounded flex items-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" loading="lazy" decoding="async" className="h-4" /></div>
+                        <div className="h-8 px-2 bg-white rounded flex items-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" loading="lazy" decoding="async" className="h-3" /></div>
                       
                     </div>
 
