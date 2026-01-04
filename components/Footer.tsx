@@ -1,7 +1,11 @@
 import React from 'react';
 import { ArrowRight, Instagram, Youtube, Twitter, Linkedin, Mail } from 'lucide-react';
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  onEnroll?: () => void;
+}
+
+const Footer: React.FC<FooterProps> = ({ onEnroll }) => {
   return (
     <footer className="bg-brand-black pt-20 pb-10 relative overflow-hidden border-t border-white/5">
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
@@ -26,7 +30,10 @@ const Footer: React.FC = () => {
               Join the CapCut Video Editing Course and turn your ideas into high-quality videos.
             </p>
             
-            <button className="px-10 py-5 bg-brand-blue text-black font-bold text-lg rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(26,193,221,0.4)] flex items-center gap-2 hover:bg-white hover:text-brand-blue duration-300">
+            <button 
+              onClick={onEnroll}
+              className="px-10 py-5 bg-brand-blue text-black font-bold text-lg rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(26,193,221,0.4)] flex items-center gap-2 hover:bg-white hover:text-brand-blue duration-300"
+            >
                 Enroll Now <ArrowRight className="w-5 h-5" />
             </button>
             

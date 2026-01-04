@@ -16,15 +16,15 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Header Animation
+      // Header Animation - SLOWED DOWN
       gsap.fromTo(
         '.courses-header',
         { y: 50, opacity: 0 },
         {
           y: 0,
           opacity: 1,
-          duration: 1,
-          ease: 'power3.out',
+          duration: 2.0, // Increased from 1
+          ease: 'power2.out', // Softer ease
           scrollTrigger: {
             trigger: sectionRef.current,
             start: 'top 80%',
@@ -32,7 +32,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
         }
       );
 
-      // Cards Stagger
+      // Cards Stagger - SLOWED DOWN
       gsap.fromTo(
         '.course-card-item',
         { y: 100, opacity: 0, rotateX: 5 },
@@ -40,9 +40,9 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
           y: 0,
           opacity: 1,
           rotateX: 0,
-          duration: 1.2,
-          stagger: 0.2,
-          ease: 'power4.out',
+          duration: 1.8, // Increased from 1.2
+          stagger: 0.3, // Increased stagger for more delay between cards
+          ease: 'power3.out', // Softer ease
           scrollTrigger: {
             trigger: cardsRef.current,
             start: 'top 75%',

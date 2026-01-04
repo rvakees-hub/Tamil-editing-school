@@ -21,6 +21,8 @@ const PageLoader = () => (
 const App: React.FC = () => {
   // Simple state-based routing
   const [currentView, setCurrentView] = useState<'home' | 'capcut'>('home');
+  // Lifted modal state to App level so Footer can trigger it
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     // Smooth scroll behavior for anchor links
@@ -37,6 +39,13 @@ const App: React.FC = () => {
 
   const handleBackToHome = () => {
     setCurrentView('home');
+    setIsModalOpen(false);
+    window.scrollTo(0, 0);
+  };
+
+  const handleFooterEnroll = () => {
+    setCurrentView('capcut');
+    setIsModalOpen(true);
     window.scrollTo(0, 0);
   };
 
@@ -46,17 +55,22 @@ const App: React.FC = () => {
         {currentView === 'home' ? (
           <>
             <Hero />
-            <Courses onSelectCourse={handleCourseSelection} />
+            {/* Moved TrustedBy to second position as requested */}
             <TrustedBy />
+            <Courses onSelectCourse={handleCourseSelection} />
             <HowItWorks />
           </>
         ) : (
           <Suspense fallback={<PageLoader />}>
-            <CapCutPage onBack={handleBackToHome} />
+            <CapCutPage 
+              onBack={handleBackToHome} 
+              isModalOpen={isModalOpen}
+              setIsModalOpen={setIsModalOpen}
+            />
           </Suspense>
         )}
       </main>
-      <Footer />
+      <Footer onEnroll={handleFooterEnroll} />
     </div>
   );
 };

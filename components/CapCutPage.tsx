@@ -8,6 +8,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 interface CapCutPageProps {
   onBack: () => void;
+  isModalOpen: boolean;
+  setIsModalOpen: (isOpen: boolean) => void;
 }
 
 const CAPCUT_SYLLABUS = [
@@ -73,7 +75,7 @@ const CAPCUT_SYLLABUS = [
   }
 ];
 
-const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
+const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModalOpen }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
@@ -83,7 +85,6 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
   const pricingRef = useRef<HTMLDivElement>(null);
   
   const [timeLeft, setTimeLeft] = useState('23:59:59');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
 
@@ -629,7 +630,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
                         className="w-full group relative px-8 py-5 bg-brand-blue text-black font-bold text-lg rounded-xl overflow-hidden shadow-[0_0_20px_rgba(26,193,221,0.4)] hover:shadow-[0_0_40px_rgba(26,193,221,0.6)] transition-all duration-300 hover:scale-[1.02]"
                     >
                         <span className="relative z-10 flex items-center justify-center gap-2">
-                            Enroll Now <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            Register Now <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </span>
                         <div className="absolute inset-0 bg-gradient-to-r from-brand-blue to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </button>
@@ -737,7 +738,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack }) => {
                         type="submit"
                         className="w-full mt-4 bg-brand-blue hover:bg-cyan-400 text-black font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(26,193,221,0.3)] flex items-center justify-center gap-2"
                     >
-                        Proceed to Payment <ArrowRight className="w-4 h-4" />
+                        Register Now <ArrowRight className="w-4 h-4" />
                     </button>
                     
                     <p className="text-center text-[10px] text-gray-500">
