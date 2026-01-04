@@ -11,7 +11,7 @@ const Footer: React.FC<FooterProps> = ({ onEnroll }) => {
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         
         {/* Large CTA Card */}
-        <div className="relative w-full rounded-[2.5rem] overflow-hidden border border-white/10 bg-gradient-to-b from-[#0a0a0a] to-black p-8 md:p-20 text-center mb-20 group">
+        <div className="relative w-full rounded-[2.5rem] overflow-hidden border border-white/10 bg-gradient-to-b from-brand-dark to-brand-black p-8 md:p-20 text-center mb-20 group">
           {/* Glow Effect Background */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[80%] bg-brand-blue/10 blur-[120px] rounded-full pointer-events-none group-hover:bg-brand-blue/15 transition-colors duration-700"></div>
           

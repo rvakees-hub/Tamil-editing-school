@@ -19,8 +19,26 @@ const PageLoader = () => (
 );
 
 const App: React.FC = () => {
-  // Simple state-based routing
-  const [currentView, setCurrentView] = useState<'home' | 'capcut'>('home');
+  // Initialize state based on current URL to ensure immediate rendering of the correct page
+  const [currentView, setCurrentView] = useState<'home' | 'capcut'>(() => {
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const pathname = window.location.pathname;
+      const hash = window.location.hash;
+      const params = new URLSearchParams(window.location.search);
+
+      if (
+        hostname.startsWith('capcut.') ||
+        pathname === '/capcut' ||
+        hash === '#capcut' ||
+        params.get('page') === 'capcut'
+      ) {
+        return 'capcut';
+      }
+    }
+    return 'home';
+  });
+
   // Lifted modal state to App level so Footer can trigger it
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -28,8 +46,6 @@ const App: React.FC = () => {
     // Smooth scroll behavior for anchor links
     document.documentElement.style.scrollBehavior = 'smooth';
 
-    // --- ROUTING LOGIC START ---
-    // This fixes the issue where deep links or subdomains wouldn't load the CapCut page
     const handleRouting = () => {
       const params = new URLSearchParams(window.location.search);
       const pageParam = params.get('page');
@@ -37,7 +53,6 @@ const App: React.FC = () => {
       const hostname = window.location.hostname;
       const pathname = window.location.pathname;
 
-      // Check for /capcut path OR ?page=capcut OR #capcut OR subdomain 'capcut.'
       if (
         pathname === '/capcut' ||
         pageParam === 'capcut' || 
@@ -46,28 +61,29 @@ const App: React.FC = () => {
       ) {
         setCurrentView('capcut');
       } else {
-        // Only revert to home if explicitly navigating back or loading root
-        if (pathname !== '/capcut' && pageParam !== 'capcut' && hash !== '#capcut' && !hostname.startsWith('capcut.')) {
-             setCurrentView('home');
+        // Only revert to home if NOT on the subdomain
+        if (!hostname.startsWith('capcut.')) {
+           setCurrentView('home');
         }
       }
     };
 
-    // Run on mount
-    handleRouting();
-
     // Run on back/forward button
     window.addEventListener('popstate', handleRouting);
     return () => window.removeEventListener('popstate', handleRouting);
-    // --- ROUTING LOGIC END ---
   }, []);
 
   // Helper to update URL without page reload
   const updateUrl = (view: 'home' | 'capcut') => {
     if (view === 'capcut') {
-       window.history.pushState({}, '', '/capcut');
+       // Don't push state if we are already on the subdomain, it handles itself
+       if (!window.location.hostname.startsWith('capcut.')) {
+          window.history.pushState({}, '', '/capcut');
+       }
     } else {
-       window.history.pushState({}, '', '/');
+       if (!window.location.hostname.startsWith('capcut.')) {
+          window.history.pushState({}, '', '/');
+       }
     }
   };
 
@@ -81,6 +97,17 @@ const App: React.FC = () => {
   };
 
   const handleBackToHome = () => {
+    // If we are on the subdomain, "Back" should take us to the main domain
+    if (window.location.hostname.startsWith('capcut.')) {
+        const mainDomain = window.location.hostname.replace('capcut.', '');
+        const protocol = window.location.protocol;
+        // Handle local development case where replace results in empty string if host is just 'capcut.localhost' etc
+        const target = mainDomain || 'tamileditingschool.com';
+        
+        window.location.href = `${protocol}//${target}`;
+        return;
+    }
+
     setCurrentView('home');
     setIsModalOpen(false);
     updateUrl('home');
@@ -100,7 +127,6 @@ const App: React.FC = () => {
         {currentView === 'home' ? (
           <>
             <Hero />
-            {/* Moved TrustedBy to second position as requested */}
             <TrustedBy />
             <Courses onSelectCourse={handleCourseSelection} />
             <HowItWorks />

@@ -243,11 +243,11 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
   return (
     <div ref={containerRef} className="min-h-screen bg-brand-black overflow-x-hidden font-sans text-white">
       {/* Navigation Header with Sticky Capability */}
-      <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-black/90 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl' : 'py-6 pointer-events-none'}`}>
+      <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-brand-black/90 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl' : 'py-6 pointer-events-none'}`}>
         <div className="container mx-auto px-4 md:px-8 flex items-center justify-between pointer-events-auto">
           <button 
               onClick={onBack}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full transition-all group ${isScrolled ? 'bg-transparent text-white hover:text-brand-blue pl-0' : 'bg-black/60 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 hover:scale-105 shadow-2xl'}`}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full transition-all group ${isScrolled ? 'bg-transparent text-white hover:text-brand-blue pl-0' : 'bg-brand-dark/60 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 hover:scale-105 shadow-2xl'}`}
           >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-brand-blue" /> 
               <span className={`font-medium text-sm ${isScrolled ? 'hidden md:inline' : 'inline'}`}>Back to Hub</span>
@@ -365,7 +365,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                   w-[280px] h-[400px] md:w-[320px] md:h-[460px] 
                   rounded-3xl overflow-hidden relative 
                   border border-white/10
-                  bg-white/5 backdrop-blur-sm
+                  bg-brand-blue/5 backdrop-blur-sm
                   group
                 ">
                   {/* Image */}
@@ -380,7 +380,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                   />
                   
                   {/* Subtle Gradient Overlay for Depth */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 via-transparent to-transparent opacity-80"></div>
                 </div>
               </div>
             ))}
@@ -443,7 +443,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                             <div key={module.id} className="cc-timeline-item relative flex items-start gap-6 md:gap-10 opacity-0">
                                 {/* Dot on the line */}
                                 <div className="relative z-10 flex-shrink-0 mt-6">
-                                    <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-black border border-white/10 flex items-center justify-center shadow-2xl relative">
+                                    <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-brand-dark border border-white/10 flex items-center justify-center shadow-2xl relative">
                                         <div className="absolute inset-0 rounded-full bg-brand-blue/10 blur-md"></div>
                                         <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-brand-blue border-2 border-white shadow-[0_0_10px_rgba(26,193,221,0.8)] z-10"></div>
                                     </div>
@@ -501,7 +501,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
       </section>
 
       {/* NEW CERTIFICATE SECTION */}
-      <section ref={certificateRef} className="py-24 bg-black relative overflow-hidden">
+      <section ref={certificateRef} className="py-24 bg-brand-dark relative overflow-hidden">
         {/* Subtle background pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20"></div>
         
@@ -563,12 +563,12 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
       </section>
 
       {/* PAYMENT SECTION */}
-      <section className="py-24 relative overflow-hidden bg-gradient-to-b from-brand-black to-[#080808]">
+      <section className="py-24 relative overflow-hidden bg-gradient-to-b from-brand-black to-brand-dark">
         {/* Glow Effect */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-blue/5 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="container mx-auto px-4 relative z-10">
-            <div ref={pricingRef} className="max-w-3xl mx-auto rounded-[2.5rem] overflow-hidden border border-white/10 bg-black/40 backdrop-blur-xl shadow-2xl relative">
+            <div ref={pricingRef} className="max-w-3xl mx-auto rounded-[2.5rem] overflow-hidden border border-white/10 bg-brand-dark/40 backdrop-blur-xl shadow-2xl relative">
                 
                 {/* Header */}
                 <div className="p-8 md:p-12 text-center border-b border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent">
@@ -664,12 +664,12 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
             {/* Backdrop */}
             <div 
-                className="absolute inset-0 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                className="absolute inset-0 bg-brand-dark/80 backdrop-blur-sm animate-in fade-in duration-200"
                 onClick={() => setIsModalOpen(false)}
             ></div>
             
             {/* Modal Content */}
-            <div className="relative z-10 w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="relative z-10 w-full max-w-md bg-brand-black border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="p-6 border-b border-white/5 bg-gradient-to-r from-brand-blue/5 to-transparent flex justify-between items-center">
                     <div>

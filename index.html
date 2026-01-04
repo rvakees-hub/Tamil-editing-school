@@ -33,11 +33,11 @@
           extend: {
             colors: {
               brand: {
-                black: '#050505',
-                dark: '#000000',
+                black: '#040B1C', /* Changed from #050505 to Deep Midnight Blue */
+                dark: '#020510',  /* Changed from #000000 to Darker Navy */
                 blue: '#1ac1dd',
                 blueGlow: 'rgba(26, 193, 221, 0.5)',
-                glass: 'rgba(255, 255, 255, 0.03)',
+                glass: 'rgba(26, 193, 221, 0.05)', /* Added slight blue tint to glass */
                 glassBorder: 'rgba(255, 255, 255, 0.08)',
                 purple: '#8B5CF6',
               }
@@ -55,7 +55,7 @@
     </script>
     <style>
       body {
-        background-color: #000000;
+        background-color: #040B1C; /* Updated to Deep Blue */
         color: #ffffff;
         overflow-x: hidden;
       }
@@ -65,10 +65,10 @@
         width: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #050505; 
+        background: #020510; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #333; 
+        background: #1e293b; 
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
@@ -77,14 +77,14 @@
 
       /* Utility for glass effects */
       .glass-card {
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(26, 193, 221, 0.03); /* Slight blue tint */
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.08);
       }
       
       .text-gradient {
-        background: linear-gradient(to right, #ffffff, #999999);
+        background: linear-gradient(to right, #ffffff, #94a3b8);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
@@ -92,16 +92,16 @@
 <script type="importmap">
 {
   "imports": {
-    "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
-    "path": "https://esm.sh/path@^0.12.7",
-    "url": "https://esm.sh/url@^0.11.4",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
     "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "vite": "https://esm.sh/vite@^7.3.0",
+    "gsap": "https://esm.sh/gsap@^3.14.2",
     "gsap/": "https://esm.sh/gsap@^3.14.2/",
-    "gsap": "https://esm.sh/gsap@^3.14.2"
+    "vite": "https://esm.sh/vite@^7.3.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "path": "https://esm.sh/path@^0.12.7",
+    "url": "https://esm.sh/url@^0.11.4"
   }
 }
 </script>

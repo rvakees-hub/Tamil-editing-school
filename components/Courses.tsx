@@ -1,57 +1,12 @@
-import React, { useRef, useEffect } from 'react';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import React from 'react';
 import { ArrowUpRight, Lock, Sparkles, Smartphone, Clapperboard, MonitorPlay } from 'lucide-react';
 import { COURSES } from '../constants';
-
-gsap.registerPlugin(ScrollTrigger);
 
 interface CoursesProps {
   onSelectCourse: (courseId: string) => void;
 }
 
 const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      // Header Animation - SLOWED DOWN
-      gsap.fromTo(
-        '.courses-header',
-        { y: 50, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 2.0, // Increased from 1
-          ease: 'power2.out', // Softer ease
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 80%',
-          },
-        }
-      );
-
-      // Cards Stagger - SLOWED DOWN
-      gsap.fromTo(
-        '.course-card-item',
-        { y: 100, opacity: 0, rotateX: 5 },
-        {
-          y: 0,
-          opacity: 1,
-          rotateX: 0,
-          duration: 1.8, // Increased from 1.2
-          stagger: 0.3, // Increased stagger for more delay between cards
-          ease: 'power3.out', // Softer ease
-          scrollTrigger: {
-            trigger: cardsRef.current,
-            start: 'top 75%',
-          },
-        }
-      );
-    }, sectionRef);
-    return () => ctx.revert();
-  }, []);
 
   const getIcon = (id: string) => {
     switch (id) {
@@ -63,7 +18,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
   }
 
   return (
-    <section id="courses-section" ref={sectionRef} className="pt-12 pb-32 bg-brand-black relative overflow-hidden">
+    <section id="courses-section" className="pt-12 pb-32 bg-brand-black relative overflow-hidden">
       {/* Background Decor */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-brand-blue/5 blur-[120px] rounded-full pointer-events-none" />
       
@@ -80,7 +35,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
             </p>
         </div>
 
-        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
           {COURSES.map((course) => {
             const isAvailable = course.status === 'available';
             const isPro = course.id === 'video-editing';
@@ -96,7 +51,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
               }`}
             >
               {/* Image Background */}
-              <div className="absolute inset-0 z-0 bg-gray-900">
+              <div className="absolute inset-0 z-0 bg-brand-dark">
                 <img 
                   src={course.image} 
                   alt={course.title} 
@@ -104,11 +59,11 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
                   decoding="async"
                   width="800"
                   height="1200"
-                  className={`w-full h-full object-cover transition-transform duration-1000 ease-in-out ${isPro ? 'scale-125 group-hover:scale-135' : 'group-hover:scale-110'}`} 
+                  className={`w-full h-full object-cover ${isPro ? 'scale-125' : ''}`} 
                 />
                 
-                {/* Darker Bottom Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent opacity-90 transition-opacity duration-500" />
+                {/* Darker Bottom Gradient Overlay - Updated to Navy */}
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/80 to-transparent opacity-90 transition-opacity duration-500" />
                 
                 {/* Subtle Blue Tint Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-blue/10 via-transparent to-transparent opacity-100 pointer-events-none" />
@@ -125,7 +80,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
                         Enroll Now
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-full text-sm font-medium text-gray-400">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-brand-black/60 backdrop-blur-md border border-white/10 rounded-full text-sm font-medium text-gray-400">
                         <Lock className="w-3 h-3" /> Waitlist
                     </div>
                 )}
@@ -133,7 +88,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
 
               {/* Icon Badge */}
               <div className={`absolute top-6 left-6 z-20 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center backdrop-blur-md bg-gradient-to-br ${
-                  isAvailable ? 'from-brand-blue/20 to-black text-brand-blue' : 'from-gray-800 to-black text-gray-400'
+                  isAvailable ? 'from-brand-blue/20 to-brand-black text-brand-blue' : 'from-gray-800 to-black text-gray-400'
               }`}>
                 {getIcon(course.id)}
               </div>
