@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowLeft, ArrowRight, PlayCircle, Zap, CheckCircle2, Scissors, Monitor, Film, CreditCard, Lock, ShieldCheck, Check, ChevronDown, Award, X, User, Mail, Phone, Music, Sparkles, Layers, Activity, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, PlayCircle, Zap, CheckCircle2, Scissors, Monitor, Film, CreditCard, Check, ChevronDown, Award, X, User, Mail, Phone, Music, Sparkles, Layers, Activity, Clock, Loader2 } from 'lucide-react';
 import { TRUSTED_CREATORS } from '../constants';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -84,9 +84,10 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
   const certificateRef = useRef<HTMLDivElement>(null);
   const pricingRef = useRef<HTMLDivElement>(null);
   
-  const [timeLeft, setTimeLeft] = useState('23:59:59');
+  const [timeLeft, setTimeLeft] = useState('06:00:00');
   const [isScrolled, setIsScrolled] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Scroll to top on mount
@@ -98,33 +99,48 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
     };
     window.addEventListener('scroll', handleScroll);
 
-    // Countdown Logic
-    const timer = setInterval(() => {
+    // Countdown Logic (6 Hour Cycles)
+    const updateTimer = () => {
       const date = new Date();
-      const hours = 23 - date.getHours();
-      const minutes = 59 - date.getMinutes();
-      const seconds = 59 - date.getSeconds();
+      // Calculate remaining time in a 6-hour window (0-6, 6-12, 12-18, 18-24)
+      const currentHour = date.getHours();
+      const remainingHours = 5 - (currentHour % 6);
+      const remainingMinutes = 59 - date.getMinutes();
+      const remainingSeconds = 59 - date.getSeconds();
+      
       setTimeLeft(
-        `${hours.toString().padStart(2, '0')}:${minutes
+        `${remainingHours.toString().padStart(2, '0')}:${remainingMinutes
           .toString()
-          .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+          .padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
       );
-    }, 1000);
+    };
+
+    // Initial call
+    updateTimer();
+    
+    const timer = setInterval(updateTimer, 1000);
 
     const ctx = gsap.context(() => {
         // 1. Hero Animation Sequence
         const tl = gsap.timeline();
 
+        // Animate Video First
         tl.fromTo(
+            '.wistia-embed',
+            { y: 40, opacity: 0, scale: 0.95 },
+            { y: 0, opacity: 1, scale: 1, duration: 1, ease: 'power3.out' }
+        )
+        .fromTo(
             '.hero-tagline',
             { y: 20, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' }
+            { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' },
+            '-=0.5'
         )
         .fromTo(
             headlineRef.current,
             { y: 50, opacity: 0, scale: 0.95 },
             { y: 0, opacity: 1, scale: 1, duration: 1.2, ease: 'power3.out' },
-            '-=0.4'
+            '-=0.6'
         )
         .fromTo(
             subRef.current,
@@ -231,84 +247,106 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate submission
-    console.log("Form Submitted:", formData);
-    alert("Thanks for enrolling! We will contact you shortly to finalize the payment.");
-    setIsModalOpen(false);
-    setFormData({ name: '', email: '', phone: '' });
+    setIsSubmitting(true);
+
+    const SHEETDB_URL = 'https://sheetdb.io/api/v1/ccdajtboqrtax'; 
+    
+    try {
+        const response = await fetch(SHEETDB_URL, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: {
+                    Name: formData.name,
+                    Email: formData.email,
+                    Phone: formData.phone,
+                    Date: new Date().toLocaleString()
+                }
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Registration successful! We will contact you shortly.");
+            setIsModalOpen(false);
+            setFormData({ name: '', email: '', phone: '' });
+        } else {
+            console.error('Submission failed', data);
+            alert("Something went wrong. Please try again or contact support.");
+        }
+
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        alert("Connection error. Please check your internet connection.");
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
+  const [hours, minutes, seconds] = timeLeft.split(':');
+
   return (
-    <div ref={containerRef} className="min-h-screen bg-brand-black overflow-x-hidden font-sans text-white">
-      {/* Navigation Header with Sticky Capability */}
-      <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-brand-black/90 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl' : 'py-6 pointer-events-none'}`}>
-        <div className="container mx-auto px-4 md:px-8 flex items-center justify-between pointer-events-auto">
+    <div ref={containerRef} className="min-h-screen bg-brand-black overflow-x-hidden font-sans text-white pb-20">
+      {/* Navigation Header - Top Back Button */}
+      <header className="fixed top-0 left-0 w-full z-50 py-4 pointer-events-none">
+        <div className="container mx-auto px-4 md:px-8">
           <button 
               onClick={onBack}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full transition-all group ${isScrolled ? 'bg-transparent text-white hover:text-brand-blue pl-0' : 'bg-brand-dark/60 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 hover:scale-105 shadow-2xl'}`}
+              className="pointer-events-auto flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-dark/60 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 hover:scale-105 shadow-2xl transition-all"
           >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-brand-blue" /> 
-              <span className={`font-medium text-sm ${isScrolled ? 'hidden md:inline' : 'inline'}`}>Back to Hub</span>
+              <ArrowLeft className="w-4 h-4 text-brand-blue" /> 
+              <span className="font-medium text-sm">Back to Hub</span>
           </button>
-
-          {/* Sticky Timer & CTA (Visible on Scroll) */}
-          <div className={`flex items-center gap-3 md:gap-6 transition-all duration-500 transform ${isScrolled ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'}`}>
-             <div className="flex items-center gap-3 bg-white/5 px-4 py-1.5 rounded-lg border border-white/10">
-                 <Clock className="w-3 h-3 text-brand-blue animate-pulse" />
-                 <span className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest hidden sm:inline">Offer closes in:</span>
-                 <span className="font-mono text-sm md:text-base font-bold text-white tabular-nums">{timeLeft}</span>
-             </div>
-             <button 
-                onClick={handleEnrollClick}
-                className="bg-brand-blue text-black px-5 py-2 rounded-full font-bold text-sm hover:bg-white transition-colors shadow-[0_0_15px_rgba(26,193,221,0.4)]"
-             >
-                Enroll Now
-             </button>
-          </div>
         </div>
       </header>
 
-      {/* Hero Section - Redesigned to match Main Page */}
-      <section className="relative min-h-[95vh] flex flex-col pt-0 overflow-hidden bg-brand-black">
+      {/* Hero Section - Video Top, Text Bottom */}
+      <section className="relative min-h-[90vh] flex flex-col pt-24 pb-12 overflow-hidden bg-brand-black">
         {/* Background Effects */}
         <div className="absolute inset-0 z-0">
-             {/* Box Grid Background */}
              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
-             
-             {/* Animated Blobs */}
-             <div className="hero-bg-gradient absolute top-[-20%] left-[20%] w-[60%] h-[60%] bg-brand-blue/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
-             <div className="hero-bg-gradient absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-900/20 rounded-full blur-[120px] pointer-events-none" />
+             <div className="hero-bg-gradient absolute top-[-10%] left-[50%] -translate-x-1/2 w-[80%] h-[60%] bg-brand-blue/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
         </div>
         
-        <div className="container mx-auto px-4 lg:px-8 flex flex-col items-center justify-center flex-grow z-10 relative mt-0 md:-mt-10 pt-20">
-            <div className="max-w-5xl mx-auto text-center">
+        <div className="container mx-auto px-4 lg:px-8 flex flex-col items-center justify-start flex-grow z-10 relative">
+            <div className="max-w-4xl w-full mx-auto text-center flex flex-col items-center">
                 
+                {/* Wistia Video Embed - NOW AT THE TOP */}
+                <div className="wistia-embed w-full mb-12 flex flex-col items-center justify-center">
+                    <div className="w-full rounded-2xl overflow-hidden shadow-[0_0_40px_rgba(26,193,221,0.2)] hover:shadow-[0_0_60px_rgba(26,193,221,0.4)] transition-all duration-500 border border-brand-blue/20 bg-black relative z-20 group">
+                         <div className="wistia_responsive_padding" style={{padding:'56.25% 0 0 0', position:'relative'}}>
+                             <div className="wistia_responsive_wrapper" style={{height:'100%', left:0, position:'absolute', top:0, width:'100%'}}>
+                                 <iframe src="https://fast.wistia.net/embed/iframe/oe07wkx76z?web_component=true&seo=true" title="cupcut landing page video" allow="autoplay; fullscreen" allowTransparency={true} frameBorder="0" scrolling="no" className="wistia_embed" name="wistia_embed" width="100%" height="100%"></iframe>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+
+                {/* Text Content - NOW BELOW VIDEO */}
                 <div className="hero-tagline flex items-center justify-center gap-3 mb-6">
                     <span className="h-[1px] w-8 bg-gradient-to-r from-transparent to-gray-500"></span>
                     <span className="text-sm md:text-base text-brand-blue font-medium tracking-[0.2em] uppercase">Mobile Editing Masterclass</span>
                     <span className="h-[1px] w-8 bg-gradient-to-l from-transparent to-gray-500"></span>
                 </div>
                 
-                <h1 ref={headlineRef} className="relative group cursor-default">
-                    {/* Glow effect */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-brand-blue/10 rounded-full blur-[100px] -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-
+                <h1 ref={headlineRef} className="relative group cursor-default mb-6">
                     <div className="flex flex-col items-center leading-none">
-                        {/* First Line */}
-                        <span className="font-serif text-5xl md:text-7xl lg:text-8xl text-white italic tracking-wide z-10 transition-transform duration-500 group-hover:-translate-y-2 drop-shadow-2xl">
+                        <span className="font-serif text-5xl md:text-6xl lg:text-7xl text-white italic tracking-wide z-10 drop-shadow-2xl">
                             Learn CapCut Editing
                         </span>
-                        
-                        {/* Second Line */}
-                        <span className="font-sans text-[4.5rem] md:text-[8rem] lg:text-[10rem] font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-100 to-cyan-900 z-10 -mt-2 md:-mt-6 lg:-mt-10 transition-transform duration-500 group-hover:translate-y-2 pb-4 md:pb-8">
+                        <span className="font-sans text-[4rem] md:text-[6rem] lg:text-[8rem] font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-cyan-100 to-cyan-900 z-10 -mt-2 md:-mt-4 lg:-mt-6 pb-2">
                             MASTERY
                         </span>
                     </div>
                 </h1>
                 
-                <p ref={subRef} className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto font-sans leading-relaxed mt-2 mb-10">
+                <p ref={subRef} className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto font-sans leading-relaxed mb-8">
                     Master viral editing on <span className="text-white font-semibold">Mobile & PC</span>. 
                     Create high-quality Reels that get millions of views without expensive gear.
                 </p>
@@ -322,14 +360,42 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                             Enroll Now - LKR 9,999 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </span>
                     </button>
-                    {/* Removed 'Watch Syllabus' button as requested */}
                 </div>
             </div>
         </div>
-
-        {/* Bottom Scroll Indicator */}
-       
       </section>
+
+      {/* Sticky Bottom Footer - Timer & CTA */}
+      <div className={`fixed bottom-0 left-0 w-full z-40 transition-all duration-500 transform ${isScrolled ? 'translate-y-0' : 'translate-y-0'}`}>
+         <div className="bg-brand-black/90 backdrop-blur-xl border-t border-white/10 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+             <div className="container mx-auto flex items-center justify-between">
+                 <div className="flex items-center gap-3 md:gap-4">
+                     <div className="hidden md:flex flex-col">
+                        <span className="text-[10px] text-gray-400 uppercase tracking-widest">Offer ends in</span>
+                        <span className="font-mono text-xl font-bold text-white tabular-nums">{timeLeft}</span>
+                     </div>
+                     {/* Mobile Timer Compact */}
+                     <div className="md:hidden flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+                         <Clock className="w-3 h-3 text-brand-blue animate-pulse" />
+                         <span className="font-mono text-sm font-bold text-white">{timeLeft}</span>
+                     </div>
+                 </div>
+                 
+                 <div className="flex items-center gap-4">
+                     <div className="hidden md:block text-right">
+                         <div className="text-xs text-gray-400 line-through">LKR 19,999</div>
+                         <div className="text-lg font-bold text-white">LKR 9,999</div>
+                     </div>
+                     <button 
+                        onClick={handleEnrollClick}
+                        className="bg-brand-blue text-black px-6 py-3 rounded-full font-bold text-sm hover:bg-white transition-colors shadow-[0_0_15px_rgba(26,193,221,0.4)]"
+                     >
+                        Enroll Now
+                     </button>
+                 </div>
+             </div>
+         </div>
+      </div>
 
       {/* TRAINERS WORKED WITH SECTION - Moved to Second Section */}
       <section className="relative py-24 overflow-hidden border-t border-white/5 bg-brand-black">
@@ -554,6 +620,8 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                             alt="Course Certificate" 
                             loading="lazy" 
                             decoding="async"
+                            width="842"
+                            height="595"
                             className="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
                         />
                         {/* Shine effect */}
@@ -576,6 +644,22 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                 <div className="p-8 md:p-12 text-center border-b border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent">
                     <h2 className="font-serif text-3xl md:text-5xl text-white mb-4">Enroll in the CapCut Video Editing Course</h2>
                     <p className="text-gray-400 text-lg">Learn editing from scratch – Mobile & PC</p>
+                    
+                    {/* Beautiful Countdown */}
+                    <div className="flex justify-center gap-4 mt-8">
+                        <div className="flex flex-col items-center bg-brand-black/40 border border-brand-blue/20 rounded-xl p-3 min-w-[80px] backdrop-blur-sm shadow-lg shadow-brand-blue/5">
+                            <span className="text-3xl font-bold text-white font-mono">{hours}</span>
+                            <span className="text-[10px] text-brand-blue uppercase tracking-widest mt-1">Hrs</span>
+                        </div>
+                        <div className="flex flex-col items-center bg-brand-black/40 border border-brand-blue/20 rounded-xl p-3 min-w-[80px] backdrop-blur-sm shadow-lg shadow-brand-blue/5">
+                            <span className="text-3xl font-bold text-white font-mono">{minutes}</span>
+                            <span className="text-[10px] text-brand-blue uppercase tracking-widest mt-1">Mins</span>
+                        </div>
+                        <div className="flex flex-col items-center bg-brand-black/40 border border-brand-blue/20 rounded-xl p-3 min-w-[80px] backdrop-blur-sm shadow-lg shadow-brand-blue/5">
+                            <span className="text-3xl font-bold text-white font-mono">{seconds}</span>
+                            <span className="text-[10px] text-brand-blue uppercase tracking-widest mt-1">Secs</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Body */}
@@ -637,24 +721,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                         <div className="absolute inset-0 bg-gradient-to-r from-brand-blue to-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </button>
 
-                    {/* Trust Signals */}
-                    <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 text-gray-500 text-sm">
-                        <div className="flex items-center gap-2">
-                            <Lock className="w-4 h-4 text-gray-400" />
-                            <span>100% Secure Payment</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-gray-400" />
-                            <span>Instant Access After Payment</span>
-                        </div>
-                    </div>
-                    
-                    {/* Payment Methods Visual */}
-                    <div className="mt-6 flex items-center justify-center gap-3 opacity-60 grayscale hover:grayscale-0 transition-all">
-                        <div className="h-8 px-2 bg-white rounded flex items-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="Mastercard" loading="lazy" decoding="async" className="h-4" /></div>
-                        <div className="h-8 px-2 bg-white rounded flex items-center"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" alt="Visa" loading="lazy" decoding="async" className="h-3" /></div>
-                      
-                    </div>
+                    {/* REMOVED TRUST SIGNALS AND PAYMENT ICONS */}
 
                 </div>
             </div>
@@ -738,9 +805,19 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                     
                     <button 
                         type="submit"
-                        className="w-full mt-4 bg-brand-blue hover:bg-cyan-400 text-black font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] shadow-[0_0_20px_rgba(26,193,221,0.3)] flex items-center justify-center gap-2"
+                        disabled={isSubmitting}
+                        className={`w-full mt-4 bg-brand-blue hover:bg-cyan-400 text-black font-bold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(26,193,221,0.3)] flex items-center justify-center gap-2 ${isSubmitting ? 'opacity-80 cursor-not-allowed' : 'hover:scale-[1.02]'}`}
                     >
-                        Register Now <ArrowRight className="w-4 h-4" />
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            <>
+                                Register Now <ArrowRight className="w-4 h-4" />
+                            </>
+                        )}
                     </button>
                     
                     <p className="text-center text-[10px] text-gray-500">
