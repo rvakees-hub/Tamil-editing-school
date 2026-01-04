@@ -35,9 +35,11 @@ const App: React.FC = () => {
       const pageParam = params.get('page');
       const hash = window.location.hash;
       const hostname = window.location.hostname;
+      const pathname = window.location.pathname;
 
-      // Check for ?page=capcut OR #capcut OR subdomain 'capcut.'
+      // Check for /capcut path OR ?page=capcut OR #capcut OR subdomain 'capcut.'
       if (
+        pathname === '/capcut' ||
         pageParam === 'capcut' || 
         hash === '#capcut' || 
         hostname.startsWith('capcut.')
@@ -45,7 +47,7 @@ const App: React.FC = () => {
         setCurrentView('capcut');
       } else {
         // Only revert to home if explicitly navigating back or loading root
-        if (pageParam !== 'capcut' && hash !== '#capcut' && !hostname.startsWith('capcut.')) {
+        if (pathname !== '/capcut' && pageParam !== 'capcut' && hash !== '#capcut' && !hostname.startsWith('capcut.')) {
              setCurrentView('home');
         }
       }
@@ -62,14 +64,11 @@ const App: React.FC = () => {
 
   // Helper to update URL without page reload
   const updateUrl = (view: 'home' | 'capcut') => {
-    const newUrl = new URL(window.location.href);
     if (view === 'capcut') {
-      newUrl.searchParams.set('page', 'capcut');
+       window.history.pushState({}, '', '/capcut');
     } else {
-      newUrl.searchParams.delete('page');
+       window.history.pushState({}, '', '/');
     }
-    // Push state so back button works
-    window.history.pushState({}, '', newUrl);
   };
 
   const handleCourseSelection = (courseId: string) => {
