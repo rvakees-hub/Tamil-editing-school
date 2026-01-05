@@ -22,18 +22,23 @@ const App: React.FC = () => {
   // Initialize state based on current URL to ensure immediate rendering of the correct page
   const [currentView, setCurrentView] = useState<'home' | 'capcut'>(() => {
     if (typeof window !== 'undefined') {
-      const hostname = window.location.hostname;
-      const pathname = window.location.pathname;
-      const hash = window.location.hash;
-      const params = new URLSearchParams(window.location.search);
+      try {
+        const hostname = window.location.hostname;
+        const pathname = window.location.pathname;
+        const hash = window.location.hash;
+        const params = new URLSearchParams(window.location.search);
 
-      if (
-        hostname.startsWith('capcut.') ||
-        pathname === '/capcut' ||
-        hash === '#capcut' ||
-        params.get('page') === 'capcut'
-      ) {
-        return 'capcut';
+        if (
+          hostname.startsWith('capcut.') ||
+          pathname === '/capcut' ||
+          hash === '#capcut' ||
+          params.get('page') === 'capcut'
+        ) {
+          return 'capcut';
+        }
+      } catch (e) {
+        // In case of restricted access to window.location
+        console.warn('Error reading window location:', e);
       }
     }
     return 'home';
@@ -47,24 +52,28 @@ const App: React.FC = () => {
     document.documentElement.style.scrollBehavior = 'smooth';
 
     const handleRouting = () => {
-      const params = new URLSearchParams(window.location.search);
-      const pageParam = params.get('page');
-      const hash = window.location.hash;
-      const hostname = window.location.hostname;
-      const pathname = window.location.pathname;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const pageParam = params.get('page');
+        const hash = window.location.hash;
+        const hostname = window.location.hostname;
+        const pathname = window.location.pathname;
 
-      if (
-        pathname === '/capcut' ||
-        pageParam === 'capcut' || 
-        hash === '#capcut' || 
-        hostname.startsWith('capcut.')
-      ) {
-        setCurrentView('capcut');
-      } else {
-        // Only revert to home if NOT on the subdomain
-        if (!hostname.startsWith('capcut.')) {
-           setCurrentView('home');
+        if (
+          pathname === '/capcut' ||
+          pageParam === 'capcut' || 
+          hash === '#capcut' || 
+          hostname.startsWith('capcut.')
+        ) {
+          setCurrentView('capcut');
+        } else {
+          // Only revert to home if NOT on the subdomain
+          if (!hostname.startsWith('capcut.')) {
+             setCurrentView('home');
+          }
         }
+      } catch (e) {
+        console.warn('Routing handler error:', e);
       }
     };
 
@@ -75,15 +84,20 @@ const App: React.FC = () => {
 
   // Helper to update URL without page reload
   const updateUrl = (view: 'home' | 'capcut') => {
-    if (view === 'capcut') {
-       // Don't push state if we are already on the subdomain, it handles itself
-       if (!window.location.hostname.startsWith('capcut.')) {
-          window.history.pushState({}, '', '/capcut');
-       }
-    } else {
-       if (!window.location.hostname.startsWith('capcut.')) {
-          window.history.pushState({}, '', '/');
-       }
+    try {
+      if (view === 'capcut') {
+         // Don't push state if we are already on the subdomain, it handles itself
+         if (!window.location.hostname.startsWith('capcut.')) {
+            window.history.pushState({}, '', '/capcut');
+         }
+      } else {
+         if (!window.location.hostname.startsWith('capcut.')) {
+            window.history.pushState({}, '', '/');
+         }
+      }
+    } catch (e) {
+      // Ignore security errors in sandboxed environments (e.g. preview blobs)
+      console.warn('Navigation update skipped (likely due to sandbox environment):', e);
     }
   };
 
@@ -97,15 +111,19 @@ const App: React.FC = () => {
   };
 
   const handleBackToHome = () => {
-    // If we are on the subdomain, "Back" should take us to the main domain
-    if (window.location.hostname.startsWith('capcut.')) {
-        const mainDomain = window.location.hostname.replace('capcut.', '');
-        const protocol = window.location.protocol;
-        // Handle local development case where replace results in empty string if host is just 'capcut.localhost' etc
-        const target = mainDomain || 'tamileditingschool.com';
-        
-        window.location.href = `${protocol}//${target}`;
-        return;
+    try {
+      // If we are on the subdomain, "Back" should take us to the main domain
+      if (window.location.hostname.startsWith('capcut.')) {
+          const mainDomain = window.location.hostname.replace('capcut.', '');
+          const protocol = window.location.protocol;
+          // Handle local development case where replace results in empty string if host is just 'capcut.localhost' etc
+          const target = mainDomain || 'tamileditingschool.com';
+          
+          window.location.href = `${protocol}//${target}`;
+          return;
+      }
+    } catch (e) {
+      console.warn('Hostname check failed:', e);
     }
 
     setCurrentView('home');
@@ -141,7 +159,10 @@ const App: React.FC = () => {
           </Suspense>
         )}
       </main>
-      <Footer onEnroll={handleFooterEnroll} />
+      <Footer 
+        onEnroll={handleFooterEnroll} 
+        shouldAddPadding={currentView === 'capcut'} 
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowLeft, ArrowRight, PlayCircle, Zap, CheckCircle2, Scissors, Monitor, Film, CreditCard, Check, ChevronDown, Award, X, User, Mail, Phone, Music, Sparkles, Layers, Activity, Clock, Loader2 } from 'lucide-react';
+import { ArrowRight, PlayCircle, Zap, CheckCircle2, Scissors, Monitor, Film, CreditCard, Check, ChevronDown, Award, X, User, Mail, Phone, Music, Sparkles, Layers, Activity, Clock, Loader2 } from 'lucide-react';
 import { TRUSTED_CREATORS } from '../constants';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -293,16 +293,14 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
 
   return (
     <div ref={containerRef} className="min-h-screen bg-brand-black overflow-x-hidden font-sans text-white pb-20">
-      {/* Navigation Header - Top Back Button */}
-      <header className="fixed top-0 left-0 w-full z-50 py-4 pointer-events-none">
-        <div className="container mx-auto px-4 md:px-8">
-          <button 
-              onClick={onBack}
-              className="pointer-events-auto flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-dark/60 backdrop-blur-xl border border-white/10 text-white hover:bg-white/10 hover:scale-105 shadow-2xl transition-all"
-          >
-              <ArrowLeft className="w-4 h-4 text-brand-blue" /> 
-              <span className="font-medium text-sm">Back to Hub</span>
-          </button>
+      {/* Navigation Header - Top Offer Banner */}
+      <header className="fixed top-0 left-0 w-full z-50 py-6 pointer-events-none flex justify-center">
+         <div className="pointer-events-auto glass-card px-5 py-2.5 rounded-full flex items-center gap-3 animate-fade-in-down hover:bg-white/5 transition-colors cursor-default border border-brand-blue/20 shadow-[0_0_20px_rgba(26,193,221,0.1)] backdrop-blur-xl bg-brand-black/30">
+             <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-blue"></span>
+             </span>
+             <span className="text-xs font-bold text-white uppercase tracking-wider">Launch Offer • 50% OFF Ends Soon</span>
         </div>
       </header>
 

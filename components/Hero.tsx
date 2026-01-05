@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -8,24 +8,6 @@ const Hero: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
-  const [timeLeft, setTimeLeft] = useState('23:59:59');
-
-  useEffect(() => {
-    // Countdown Logic
-    const timer = setInterval(() => {
-      const date = new Date();
-      const hours = 23 - date.getHours();
-      const minutes = 59 - date.getMinutes();
-      const seconds = 59 - date.getSeconds();
-      setTimeLeft(
-        `${hours.toString().padStart(2, '0')}:${minutes
-          .toString()
-          .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-      );
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -80,16 +62,12 @@ const Hero: React.FC = () => {
 
       {/* Top Bar - Clean & Minimal */}
       <div className="w-full flex justify-center pt-6 z-50">
-        <div className="glass-card px-6 py-2 rounded-full flex items-center gap-4 animate-fade-in-down">
-            <div className="flex items-center gap-2">
-                 <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                 </span>
-                 <span className="text-xs font-medium text-gray-300 uppercase tracking-wider">Registration Closing Soon</span>
-            </div>
-            <div className="h-4 w-[1px] bg-white/10"></div>
-            <span className="font-mono text-sm font-bold text-white">{timeLeft}</span>
+        <div className="glass-card px-5 py-2.5 rounded-full flex items-center gap-3 animate-fade-in-down hover:bg-white/5 transition-colors cursor-default border border-brand-blue/20 shadow-[0_0_20px_rgba(26,193,221,0.1)]">
+             <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-blue"></span>
+             </span>
+             <span className="text-xs font-bold text-white uppercase tracking-wider">Launch Offer • 50% OFF Ends Soon</span>
         </div>
       </div>
 
