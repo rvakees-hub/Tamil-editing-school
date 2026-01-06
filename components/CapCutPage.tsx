@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, PlayCircle, Zap, CheckCircle2, Scissors, Monitor, Film, CreditCard, Check, ChevronDown, Award, X, User, Mail, Phone, Music, Sparkles, Layers, Activity, Clock, Loader2 } from 'lucide-react';
+import { ArrowRight, PlayCircle, Zap, CheckCircle2, Scissors, Monitor, Film, CreditCard, Check, ChevronDown, Award, X, User, Mail, Phone, Music, Sparkles, Layers, Activity, Clock, Loader2, Calendar, Target, TrendingUp, Briefcase, Radio } from 'lucide-react';
 import { TRUSTED_CREATORS } from '../constants';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -83,6 +83,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
   const curriculumRef = useRef<HTMLDivElement>(null);
   const certificateRef = useRef<HTMLDivElement>(null);
   const pricingRef = useRef<HTMLDivElement>(null);
+  const mentorshipRef = useRef<HTMLDivElement>(null);
   
   const [timeLeft, setTimeLeft] = useState('06:00:00');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -214,6 +215,24 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                     start: 'top 70%',
                 }
             });
+        }
+        
+        // 5. Mentorship Animation (Robust Fade In)
+        if (mentorshipRef.current) {
+             gsap.fromTo(mentorshipRef.current.querySelectorAll('.mentorship-content'), 
+                { y: 40, opacity: 0 },
+                {
+                    y: 0,
+                    opacity: 1,
+                    stagger: 0.1,
+                    duration: 1,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: mentorshipRef.current,
+                        start: 'top 75%',
+                    }
+                }
+            );
         }
 
         // 6. Pricing Card Animation
@@ -564,70 +583,151 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
         </div>
       </section>
 
-      {/* NEW CERTIFICATE SECTION */}
-      <section ref={certificateRef} className="py-24 bg-brand-dark relative overflow-hidden">
-        {/* Subtle background pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20"></div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-                {/* Text Side */}
-                <div className="lg:w-1/2 text-center lg:text-left">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-blue/10 border border-brand-blue/20 text-brand-blue text-xs font-bold uppercase tracking-wider mb-6">
-                        <Award className="w-4 h-4" /> Certification
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-serif text-white mb-6">
-                        Earn Your <span className="italic text-brand-blue">Certificate</span>
-                    </h2>
-                    <p className="text-gray-400 text-lg leading-relaxed mb-8">
-                        Stand out in the job market. Upon successful completion of the course and projects, you'll receive a signed certificate validating your proficiency in mobile video editing.
-                    </p>
+      {/* NEW WEEKLY LIVE MENTORSHIP SECTION - TOP 1% UI REDESIGN */}
+      <section ref={mentorshipRef} className="py-32 relative overflow-hidden bg-brand-black border-t border-white/5">
+         
+         {/* Background Decor: Right Side Glow Blob */}
+         <div className="absolute top-[20%] right-[-10%] w-[800px] h-[800px] bg-brand-blue/5 blur-[150px] rounded-full pointer-events-none mix-blend-screen"></div>
+         {/* Subtle pattern overlay */}
+         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+         
+         <div className="container mx-auto px-4 lg:px-8 relative z-10">
+            
+            <div className="grid lg:grid-cols-12 gap-16 items-start">
+                
+                {/* Left Side: Headline & Live Pass */}
+                <div className="mentorship-content lg:col-span-5 flex flex-col items-start sticky top-24">
+                    {/* Badge */}
+                    <span className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider mb-8 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                        Live Weekly Access
+                    </span>
                     
-                    <ul className="space-y-4 text-left max-w-md mx-auto lg:mx-0 mb-10">
-                        <li className="flex items-center gap-3 text-gray-300">
-                            <CheckCircle2 className="w-5 h-5 text-brand-blue flex-shrink-0" />
-                            <span>Verified by Tamil Editing School</span>
-                        </li>
-                        <li className="flex items-center gap-3 text-gray-300">
-                            <CheckCircle2 className="w-5 h-5 text-brand-blue flex-shrink-0" />
-                            <span>Add to your LinkedIn profile</span>
-                        </li>
-                        <li className="flex items-center gap-3 text-gray-300">
-                            <CheckCircle2 className="w-5 h-5 text-brand-blue flex-shrink-0" />
-                            <span>Showcase to potential clients</span>
-                        </li>
-                    </ul>
+                    <h2 className="text-5xl md:text-6xl font-serif text-white mb-6 leading-[1.1]">
+                        Not Just a Course. <br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue via-cyan-300 to-white italic">A Career Launcher.</span>
+                    </h2>
+                    
+                    <p className="text-gray-400 text-lg leading-relaxed mb-10 max-w-md">
+                        We don't leave you after the videos. Join us live every week to master the business of editing and fast-track your success.
+                    </p>
 
-                    {/* NEW CTA: After Certificate Info */}
-                    <div className="flex justify-center lg:justify-start">
-                        <button 
-                            onClick={handleEnrollClick}
-                            className="px-8 py-4 bg-brand-blue text-black font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(26,193,221,0.3)] flex items-center gap-2"
-                        >
-                            Get Certified Now <ArrowRight className="w-4 h-4" />
-                        </button>
+                    {/* Schedule Ticket Card - UPDATED TO WHITE BACKGROUND */}
+                    <div className="w-full relative overflow-hidden rounded-3xl bg-white border border-transparent shadow-2xl shadow-brand-blue/5 backdrop-blur-md group hover:shadow-brand-blue/10 transition-all duration-500">
+                         {/* Card Background Glow - Removed for cleaner white look */}
+                         
+                         <div className="p-8 relative z-10">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 animate-pulse-slow">
+                                        <Radio className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-xs font-bold tracking-widest text-red-600 uppercase">Live On Zoom</span>
+                                </div>
+                                <div className="px-3 py-1 rounded-lg bg-gray-100 border border-gray-200 text-xs text-gray-600 font-mono">
+                                    GMT+5:30
+                                </div>
+                            </div>
+
+                            <div className="space-y-10">
+                                <div className="flex items-start gap-5">
+                                    <div className="mt-1">
+                                        <Calendar className="w-6 h-6 text-brand-blue" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-2xl font-bold text-brand-black mb-1">Every Friday</h4>
+                                        <p className="text-sm text-gray-600">Mark your calendar for weekly growth</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="w-full h-px bg-gray-100"></div>
+                                
+                                <div className="flex items-start gap-5">
+                                    <div className="mt-1">
+                                        <Clock className="w-6 h-6 text-brand-blue" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-2xl font-bold text-brand-black mb-1">7:30 PM</h4>
+                                        <p className="text-sm text-gray-600">90 Minutes • Q&A + Live Editing</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* CTA inside card */}
+                            <div className="mt-8 pt-6 border-t border-gray-100">
+                                <button 
+                                    onClick={handleEnrollClick}
+                                    className="w-full py-3 rounded-xl bg-brand-black hover:bg-brand-blue text-white font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-brand-blue/30"
+                                >
+                                    Get Access Pass <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                         </div>
                     </div>
                 </div>
 
-                {/* Image Side */}
-                <div className="lg:w-1/2 w-full relative group perspective-1000">
-                     <div className="absolute -inset-1 bg-gradient-to-r from-brand-blue to-cyan-500 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                     <div className="relative rounded-xl overflow-hidden shadow-2xl border border-white/10 bg-white/5 transform transition-transform duration-700 group-hover:rotate-y-2 group-hover:rotate-x-2">
-                        <img 
-                            src="https://res.cloudinary.com/duhqg4u4k/image/upload/v1767352286/Green_Modern_Event_Completion_Certificate_kipdka.png" 
-                            alt="Course Certificate" 
-                            loading="lazy" 
-                            decoding="async"
-                            width="842"
-                            height="595"
-                            className="w-full h-auto object-cover transform transition-transform duration-700 group-hover:scale-105"
-                        />
-                        {/* Shine effect */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-                     </div>
+                {/* Right Side: Bento Grid (Reverted to Dark Glass style) */}
+                <div className="lg:col-span-7 grid sm:grid-cols-2 gap-5 w-full">
+                    
+                    {/* Card 1 */}
+                    <div className="mentorship-content p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-brand-blue/20 transition-all duration-300 group backdrop-blur-sm">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-blue/10 to-transparent border border-white/5 flex items-center justify-center text-brand-blue mb-6 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(26,193,221,0.1)]">
+                            <TrendingUp className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-3 group-hover:text-brand-blue transition-colors">Income & Freelancing</h3>
+                        <p className="text-gray-400 text-sm leading-relaxed">
+                            Stop editing for free. Learn how to find high-paying international clients, structure your pricing, and close deals with confidence.
+                        </p>
+                    </div>
+
+                    {/* Card 2 */}
+                    <div className="mentorship-content p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-brand-blue/20 transition-all duration-300 group backdrop-blur-sm sm:translate-y-12">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-blue/10 to-transparent border border-white/5 flex items-center justify-center text-brand-blue mb-6 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(26,193,221,0.1)]">
+                            <Briefcase className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-3 group-hover:text-brand-blue transition-colors">Agency Blueprint</h3>
+                        <p className="text-gray-400 text-sm leading-relaxed">
+                            A complete roadmap to scaling from a solo freelancer to an agency owner. Delegate work, build a team, and automate your income.
+                        </p>
+                    </div>
+
+                    {/* Card 3 */}
+                    <div className="mentorship-content p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-brand-blue/20 transition-all duration-300 group backdrop-blur-sm">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-blue/10 to-transparent border border-white/5 flex items-center justify-center text-brand-blue mb-6 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(26,193,221,0.1)]">
+                            <Monitor className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-3 group-hover:text-brand-blue transition-colors">Live Edit Reviews</h3>
+                        <p className="text-gray-400 text-sm leading-relaxed">
+                            Don't guess if your work is good. We review student projects live on the call, fixing mistakes and polishing your portfolio in real-time.
+                        </p>
+                    </div>
+
+                    {/* Card 4 */}
+                    <div className="mentorship-content p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-brand-blue/20 transition-all duration-300 group backdrop-blur-sm sm:translate-y-12">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-blue/10 to-transparent border border-white/5 flex items-center justify-center text-brand-blue mb-6 group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(26,193,221,0.1)]">
+                            <Target className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-3 group-hover:text-brand-blue transition-colors">Professional Mindset</h3>
+                        <p className="text-gray-400 text-sm leading-relaxed">
+                            Technical skills are only 50%. We train you to think, communicate, and deliver quality like a top-1% professional editor.
+                        </p>
+                    </div>
+
                 </div>
             </div>
-        </div>
+            
+            <div className="mt-20 md:mt-32 text-center mentorship-content">
+                <button 
+                    onClick={handleEnrollClick}
+                    className="inline-flex items-center gap-2 text-gray-400 hover:text-brand-blue font-medium transition-colors group"
+                >
+                    Join the waiting list for next batch <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+            </div>
+         </div>
       </section>
 
       {/* PAYMENT SECTION */}
