@@ -595,8 +595,8 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
             
             <div className="grid lg:grid-cols-12 gap-16 items-start">
                 
-                {/* Left Side: Headline & Live Pass */}
-                <div className="mentorship-content lg:col-span-5 flex flex-col items-start sticky top-24">
+                {/* Left Side: Headline & Live Pass - FIXED STICKY BUG ON MOBILE */}
+                <div className="mentorship-content lg:col-span-5 flex flex-col items-start relative lg:sticky lg:top-24 mb-24 lg:mb-0">
                     {/* Badge */}
                     <span className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider mb-8 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
                         <span className="relative flex h-2 w-2">
@@ -619,50 +619,50 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                     <div className="w-full relative overflow-hidden rounded-3xl bg-white border border-transparent shadow-2xl shadow-brand-blue/5 backdrop-blur-md group hover:shadow-brand-blue/10 transition-all duration-500">
                          {/* Card Background Glow - Removed for cleaner white look */}
                          
-                         <div className="p-8 relative z-10">
-                            <div className="flex items-center justify-between mb-8">
+                         <div className="p-8 md:p-10 relative z-10">
+                            <div className="flex flex-wrap items-center justify-between gap-4 mb-12">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 animate-pulse-slow">
+                                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 animate-pulse-slow flex-shrink-0">
                                         <Radio className="w-5 h-5" />
                                     </div>
                                     <span className="text-xs font-bold tracking-widest text-red-600 uppercase">Live On Zoom</span>
                                 </div>
-                                <div className="px-3 py-1 rounded-lg bg-gray-100 border border-gray-200 text-xs text-gray-600 font-mono">
+                                <div className="px-3 py-1 rounded-lg bg-gray-100 border border-gray-200 text-xs text-gray-600 font-mono flex-shrink-0">
                                     GMT+5:30
                                 </div>
                             </div>
 
-                            <div className="space-y-10">
-                                <div className="flex items-start gap-5">
-                                    <div className="mt-1">
-                                        <Calendar className="w-6 h-6 text-brand-blue" />
+                            <div className="space-y-12">
+                                <div className="flex items-start gap-6">
+                                    <div className="mt-1 flex-shrink-0">
+                                        <Calendar className="w-7 h-7 text-brand-blue" />
                                     </div>
                                     <div>
-                                        <h4 className="text-2xl font-bold text-brand-black mb-1">Every Friday</h4>
-                                        <p className="text-sm text-gray-600">Mark your calendar for weekly growth</p>
+                                        <h4 className="text-xl md:text-2xl font-bold text-brand-black mb-2">Every Friday</h4>
+                                        <p className="text-gray-600">Mark your calendar for weekly growth</p>
                                     </div>
                                 </div>
                                 
                                 <div className="w-full h-px bg-gray-100"></div>
                                 
-                                <div className="flex items-start gap-5">
-                                    <div className="mt-1">
-                                        <Clock className="w-6 h-6 text-brand-blue" />
+                                <div className="flex items-start gap-6">
+                                    <div className="mt-1 flex-shrink-0">
+                                        <Clock className="w-7 h-7 text-brand-blue" />
                                     </div>
                                     <div>
-                                        <h4 className="text-2xl font-bold text-brand-black mb-1">7:30 PM</h4>
-                                        <p className="text-sm text-gray-600">90 Minutes • Q&A + Live Editing</p>
+                                        <h4 className="text-xl md:text-2xl font-bold text-brand-black mb-2">7:30 PM</h4>
+                                        <p className="text-gray-600">90 Minutes • Q&A + Live Editing</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* CTA inside card */}
-                            <div className="mt-8 pt-6 border-t border-gray-100">
+                            <div className="mt-12 pt-8 border-t border-gray-100">
                                 <button 
                                     onClick={handleEnrollClick}
-                                    className="w-full py-3 rounded-xl bg-brand-black hover:bg-brand-blue text-white font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-brand-blue/30"
+                                    className="w-full py-4 rounded-xl bg-brand-black hover:bg-brand-blue text-white font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg hover:shadow-brand-blue/30 text-lg"
                                 >
-                                    Get Access Pass <ArrowRight className="w-4 h-4" />
+                                    Get Access Pass <ArrowRight className="w-5 h-5" />
                                 </button>
                             </div>
                          </div>
