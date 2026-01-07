@@ -400,7 +400,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                  
                  <div className="flex items-center gap-4">
                      <div className="hidden md:block text-right">
-                         <div className="text-xs text-gray-400 line-through">LKR 19,999</div>
+                         <div className="text-xs text-gray-400 line-through">LKR 49,999</div>
                          <div className="text-lg font-bold text-white">LKR 9,999</div>
                      </div>
                      <button 
@@ -768,7 +768,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
                             Limited Time Offer
                         </div>
                         <div className="flex items-baseline gap-4">
-                            <span className="text-xl text-gray-500 line-through decoration-red-500/50 decoration-2">LKR 19,999</span>
+                            <span className="text-xl text-gray-500 line-through decoration-red-500/50 decoration-2">LKR 49,999</span>
                             <span className="text-5xl md:text-6xl font-bold text-white tracking-tight">LKR 9,999</span>
                         </div>
                         <p className="text-gray-400 mt-2 text-sm">One-time payment • Lifetime access</p>
