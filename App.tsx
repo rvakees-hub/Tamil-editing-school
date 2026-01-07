@@ -4,6 +4,7 @@ import HowItWorks from './components/HowItWorks';
 import TrustedBy from './components/TrustedBy';
 import Courses from './components/Courses';
 import Footer from './components/Footer';
+import EnrollmentWidget from './components/EnrollmentWidget';
 
 // Lazy load the CapCut page to reduce initial bundle size
 const CapCutPage = React.lazy(() => import('./components/CapCutPage'));
@@ -163,6 +164,9 @@ const App: React.FC = () => {
         onEnroll={handleFooterEnroll} 
         shouldAddPadding={currentView === 'capcut'} 
       />
+      
+      {/* Global Enrollment Notification Widget */}
+      <EnrollmentWidget />
     </div>
   );
 };
