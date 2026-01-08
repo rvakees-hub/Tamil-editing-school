@@ -1,3 +1,4 @@
+
 export interface Review {
   id: string;
   name: string;
@@ -52,4 +53,15 @@ export interface Course {
   tags: string[];
   status: 'available' | 'coming_soon';
   accentColor: string;
+}
+
+// Add global definition for Facebook Pixel
+declare global {
+  interface Window {
+    fbq: (
+      action: string, 
+      eventName: string, 
+      params?: Record<string, any>
+    ) => void;
+  }
 }

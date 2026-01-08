@@ -17,6 +17,18 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
     }
   }
 
+  const handleCourseClick = (courseId: string) => {
+    // Track ViewContent event
+    if (window.fbq) {
+        window.fbq('track', 'ViewContent', {
+            content_name: courseId === 'capcut' ? 'CapCut Mastery Course' : courseId,
+            content_ids: [courseId],
+            content_type: 'product'
+        });
+    }
+    onSelectCourse(courseId);
+  };
+
   return (
     <section id="courses-section" className="pt-12 pb-32 bg-brand-black relative overflow-hidden">
       {/* Background Decor */}
@@ -43,7 +55,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
             return (
             <div
               key={course.id}
-              onClick={() => isAvailable && onSelectCourse(course.id)}
+              onClick={() => isAvailable && handleCourseClick(course.id)}
               className={`course-card-item group relative h-[500px] md:h-[600px] rounded-[2rem] overflow-hidden border border-white/10 bg-brand-black transition-all duration-700 ${
                 isAvailable 
                   ? 'cursor-pointer hover:border-brand-blue/30 hover:shadow-2xl hover:shadow-brand-blue/10' 

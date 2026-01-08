@@ -94,6 +94,17 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
     // Scroll to top on mount
     window.scrollTo(0, 0);
 
+    // Track ViewContent for Pixel
+    if (window.fbq) {
+      window.fbq('track', 'ViewContent', {
+        content_name: 'CapCut Mastery Course',
+        content_ids: ['capcut-001'],
+        content_type: 'product',
+        value: 9999,
+        currency: 'LKR'
+      });
+    }
+
     // Scroll Handler for Sticky Header
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 100);
@@ -258,6 +269,16 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
   }, []);
 
   const handleEnrollClick = () => {
+    // Track InitiateCheckout
+    if (window.fbq) {
+      window.fbq('track', 'InitiateCheckout', {
+        content_name: 'CapCut Mastery Course',
+        value: 9999,
+        currency: 'LKR',
+        content_ids: ['capcut-001'],
+        content_type: 'product'
+      });
+    }
     setIsModalOpen(true);
   };
 
@@ -292,6 +313,15 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
         const data = await response.json();
 
         if (response.ok) {
+            // Track CompleteRegistration on success
+            if (window.fbq) {
+              window.fbq('track', 'CompleteRegistration', {
+                content_name: 'CapCut Mastery Course',
+                value: 9999,
+                currency: 'LKR'
+              });
+            }
+            
             alert("Registration successful! We will contact you shortly.");
             setIsModalOpen(false);
             setFormData({ name: '', email: '', phone: '' });
