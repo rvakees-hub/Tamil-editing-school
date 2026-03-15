@@ -91,7 +91,7 @@ const Hero: React.FC = () => {
 
           <p ref={subRef} className="text-lg md:text-xl text-black max-w-2xl font-sans font-medium leading-relaxed mt-6 text-center mx-auto">
             From viral <span className="text-black font-bold underline decoration-brand-blue decoration-2 underline-offset-4">Reels</span> to cinematic <span className="text-black font-bold underline decoration-brand-blue decoration-2 underline-offset-4">Films</span>. 
-            Join the elite community of Tamil editors.
+            <br /> Join the elite community of Tamil editors.
           </p>
         </div>
       </div>
