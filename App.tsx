@@ -141,7 +141,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="font-sans bg-brand-black text-white selection:bg-brand-blue selection:text-white">
+    <div className="font-sans bg-white text-brand-black selection:bg-brand-blue selection:text-white">
       <main className="relative overflow-hidden">
         {currentView === 'home' ? (
           <>

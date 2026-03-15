@@ -3,15 +3,15 @@ import { TRUSTED_CREATORS } from '../constants';
 
 const TrustedBy: React.FC = () => {
   return (
-    <section className="relative py-24 overflow-hidden border-t border-white/5 bg-brand-black">
+    <section className="relative py-24 overflow-hidden border-t border-slate-100 bg-white">
       <div className="container mx-auto px-4 mb-16 text-center relative z-10">
         <h3 className="text-sm font-bold tracking-[0.2em] text-brand-blue uppercase mb-3">
           Trusted By The Best
         </h3>
-        <h2 className="text-4xl md:text-5xl font-serif text-white mb-4">
+        <h2 className="text-4xl md:text-5xl font-serif text-brand-black mb-4">
           We've Worked With
         </h2>
-        <p className="text-gray-400 max-w-lg mx-auto">
+        <p className="text-slate-600 max-w-lg mx-auto">
           From top YouTubers to global brands, our alumni are editing for the biggest names in the industry.
         </p>
       </div>
@@ -35,8 +35,8 @@ const TrustedBy: React.FC = () => {
               <div className="
                 w-[280px] h-[400px] md:w-[320px] md:h-[460px] 
                 rounded-3xl overflow-hidden relative 
-                border border-white/10
-                bg-white/5 backdrop-blur-sm
+                border border-slate-200
+                bg-slate-50 backdrop-blur-sm
                 group
               ">
                 {/* Image */}
@@ -50,10 +50,8 @@ const TrustedBy: React.FC = () => {
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
                 
-                {/* Subtle Gradient Overlay for Depth (Reduced since text is removed) */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60"></div>
-                
-                {/* Text Overlay Removed */}
+                {/* Subtle Gradient Overlay for Depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60"></div>
               </div>
             </div>
           ))}

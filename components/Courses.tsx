@@ -30,19 +30,19 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
   };
 
   return (
-    <section id="courses-section" className="pt-12 pb-32 bg-brand-black relative overflow-hidden">
+    <section id="courses-section" className="pt-12 pb-32 bg-white relative overflow-hidden">
       {/* Background Decor */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-brand-blue/5 blur-[120px] rounded-full pointer-events-none" />
       
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="courses-header text-center mb-20">
-            <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-xs font-medium tracking-widest text-gray-400 uppercase mb-4">
+            <span className="inline-block py-1 px-3 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium tracking-widest text-slate-500 uppercase mb-4">
                 Curriculum
             </span>
-            <h2 className="text-5xl md:text-7xl font-serif text-white mb-6">
+            <h2 className="text-5xl md:text-7xl font-serif text-brand-black mb-6">
                 Choose Your <span className="italic text-brand-blue">Path</span>
             </h2>
-            <p className="text-gray-400 max-w-xl mx-auto text-lg">
+            <p className="text-slate-600 max-w-xl mx-auto text-lg">
                 Whether you're editing on a phone or a workstation, we have a specialized path to help you master the craft.
             </p>
         </div>
@@ -56,14 +56,14 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
             <div
               key={course.id}
               onClick={() => isAvailable && handleCourseClick(course.id)}
-              className={`course-card-item group relative h-[500px] md:h-[600px] rounded-[2rem] overflow-hidden border border-white/10 bg-brand-black transition-all duration-700 ${
+              className={`course-card-item group relative h-[500px] md:h-[600px] rounded-[2rem] overflow-hidden border border-slate-200 bg-white transition-all duration-700 ${
                 isAvailable 
                   ? 'cursor-pointer hover:border-brand-blue/30 hover:shadow-2xl hover:shadow-brand-blue/10' 
                   : 'cursor-not-allowed opacity-60 grayscale-[0.3]'
               }`}
             >
               {/* Image Background */}
-              <div className="absolute inset-0 z-0 bg-brand-dark">
+              <div className="absolute inset-0 z-0 bg-slate-100">
                 <img 
                   src={course.image} 
                   alt={course.title} 
@@ -75,7 +75,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
                 />
                 
                 {/* Darker Bottom Gradient Overlay - Updated to Navy */}
-                <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/80 to-transparent opacity-90 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent opacity-90 transition-opacity duration-500" />
                 
                 {/* Subtle Blue Tint Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-blue/10 via-transparent to-transparent opacity-100 pointer-events-none" />
@@ -84,7 +84,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
               {/* Status Badge */}
               <div className="absolute top-6 right-6 z-20">
                 {isAvailable ? (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-sm font-medium text-white shadow-lg">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full text-sm font-medium text-white shadow-lg">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -92,7 +92,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
                         Enroll Now
                     </div>
                 ) : (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-brand-black/60 backdrop-blur-md border border-white/10 rounded-full text-sm font-medium text-gray-400">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-900/60 backdrop-blur-md border border-white/10 rounded-full text-sm font-medium text-slate-300">
                         <Lock className="w-3 h-3" /> Waitlist
                     </div>
                 )}
@@ -100,7 +100,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
 
               {/* Icon Badge */}
               <div className={`absolute top-6 left-6 z-20 w-12 h-12 rounded-full border border-white/10 flex items-center justify-center backdrop-blur-md bg-gradient-to-br ${
-                  isAvailable ? 'from-brand-blue/20 to-brand-black text-brand-blue' : 'from-gray-800 to-black text-gray-400'
+                  isAvailable ? 'from-brand-blue/20 to-white/10 text-brand-blue' : 'from-slate-800 to-slate-900 text-slate-400'
               }`}>
                 {getIcon(course.id)}
               </div>
@@ -109,7 +109,7 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
               <div className="absolute bottom-0 left-0 w-full p-8 z-20 flex flex-col items-start">
                 <div className="flex flex-wrap gap-2 mb-4">
                     {course.tags.map(tag => (
-                        <span key={tag} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-xs font-medium text-gray-300">
+                        <span key={tag} className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-xs font-medium text-slate-100">
                             {tag}
                         </span>
                     ))}
@@ -119,11 +119,11 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
                     {course.title}
                 </h3>
                 
-                <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-[90%]">
+                <p className="text-slate-300 text-sm leading-relaxed mb-6 max-w-[90%]">
                     {course.description}
                 </p>
 
-                <div className={`flex items-center gap-2 text-sm font-bold tracking-wide uppercase ${isAvailable ? 'text-brand-blue' : 'text-gray-500'}`}>
+                <div className={`flex items-center gap-2 text-sm font-bold tracking-wide uppercase ${isAvailable ? 'text-brand-blue' : 'text-slate-400'}`}>
                     {isAvailable ? 'View Curriculum' : 'Coming Soon'}
                     <ArrowUpRight className={`w-4 h-4 transition-transform duration-300 ${isAvailable ? 'group-hover:translate-x-1 group-hover:-translate-y-1' : ''}`} />
                 </div>

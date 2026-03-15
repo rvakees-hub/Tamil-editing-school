@@ -49,58 +49,49 @@ const Hero: React.FC = () => {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative min-h-[95vh] flex flex-col pt-0 overflow-hidden bg-brand-black">
-      {/* Background Effects */}
+    <div ref={containerRef} className="relative min-h-[95vh] flex flex-col pt-0 overflow-hidden bg-white">
+      {/* Background Image - New Cloudinary Blue Gradient */}
       <div className="absolute inset-0 z-0">
-        {/* Box Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
-        
-        {/* Animated Blobs */}
-        <div className="hero-bg-gradient absolute top-[-20%] left-[20%] w-[60%] h-[60%] bg-brand-blue/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen" />
-        <div className="hero-bg-gradient absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
+        <img 
+          src="https://res.cloudinary.com/dudipr8be/image/upload/v1773599320/blue_gradient_travel_Presentation_169_1_g9reob.png" 
+          alt="Tamil Editing School Background" 
+          className="w-full h-full object-cover opacity-100"
+          referrerPolicy="no-referrer"
+        />
+        {/* White gradient at the bottom, removed left side gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white"></div>
       </div>
 
-      {/* Top Bar - Clean & Minimal */}
-      <div className="w-full flex justify-center pt-6 z-50">
-        <div className="glass-card px-5 py-2.5 rounded-full flex items-center gap-3 animate-fade-in-down hover:bg-white/5 transition-colors cursor-default border border-brand-blue/20 shadow-[0_0_20px_rgba(26,193,221,0.1)]">
-             <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-blue opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-blue"></span>
-             </span>
-             <span className="text-xs font-bold text-white uppercase tracking-wider">Launch Offer • 50% OFF Ends Soon</span>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 lg:px-8 flex flex-col items-center justify-center flex-grow z-10 relative">
-        {/* Content */}
-        <div className="max-w-5xl mx-auto text-center">
+      <div className="container mx-auto px-4 lg:px-8 flex flex-col items-center justify-start pt-32 md:pt-48 pb-16 md:pb-24 flex-grow z-10 relative">
+        {/* Content - Centered with more top space */}
+        <div className="max-w-5xl w-full mx-auto text-center flex flex-col items-center">
           
-          <div className="hero-tagline flex items-center justify-center gap-3 mb-6">
-            <span className="h-[1px] w-8 bg-gradient-to-r from-transparent to-gray-500"></span>
-            <span className="text-sm md:text-base text-brand-blue font-medium tracking-[0.2em] uppercase">The #1 Platform for Creators</span>
-            <span className="h-[1px] w-8 bg-gradient-to-l from-transparent to-gray-500"></span>
+          <div className="hero-tagline mb-6 animate-fade-in">
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm">
+                <span className="text-lg">🇱🇰</span>
+                <span className="text-xs md:text-sm text-white font-bold uppercase tracking-[0.2em]">Srilanka’s #1 Video Editing Course</span>
+            </div>
           </div>
 
-          <h1 ref={headlineRef} className="relative group cursor-default">
-            {/* Glow effect */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-brand-blue/20 rounded-full blur-[100px] -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-
+          <h1 ref={headlineRef} className="relative group cursor-default mb-8 flex flex-col items-center">
             <div className="flex flex-col items-center leading-none">
-                {/* First Line */}
-                <span className="font-serif text-5xl md:text-7xl lg:text-8xl text-white italic tracking-wide z-10 transition-transform duration-500 group-hover:-translate-y-2 drop-shadow-2xl">
+                {/* First Line - White and Big size */}
+                <span className="font-sans text-6xl md:text-8xl lg:text-9xl font-black text-white tracking-tighter uppercase mb-2 drop-shadow-lg">
                     Tamil Editing
                 </span>
                 
-                {/* Second Line */}
-                <span className="font-sans text-[5rem] md:text-[8rem] lg:text-[11rem] font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-200 to-gray-600 z-10 -mt-2 md:-mt-6 lg:-mt-10 transition-transform duration-500 group-hover:translate-y-2 pb-4 md:pb-8">
-                    SCHOOL
-                </span>
+                {/* Second Line - White text in Cyan Box, Medium size */}
+                <div className="bg-brand-blue px-8 py-2 md:px-12 md:py-3 transform -skew-x-2 shadow-2xl">
+                    <span className="font-sans text-6xl md:text-[8.5rem] lg:text-[10.5rem] font-black text-white tracking-tighter uppercase leading-none block">
+                        SCHOOL
+                    </span>
+                </div>
             </div>
           </h1>
 
-          <p ref={subRef} className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto font-sans leading-relaxed mt-2 mb-10">
-            From viral <span className="text-white font-semibold">Reels</span> to cinematic <span className="text-white font-semibold">Films</span>. 
-            Join the elite community of Tamil editors and master the art of storytelling.
+          <p ref={subRef} className="text-lg md:text-xl text-black max-w-2xl font-sans font-medium leading-relaxed mt-6 text-center mx-auto">
+            From viral <span className="text-black font-bold underline decoration-brand-blue decoration-2 underline-offset-4">Reels</span> to cinematic <span className="text-black font-bold underline decoration-brand-blue decoration-2 underline-offset-4">Films</span>. 
+            Join the elite community of Tamil editors.
           </p>
         </div>
       </div>

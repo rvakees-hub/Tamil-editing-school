@@ -57,13 +57,13 @@
           extend: {
             colors: {
               brand: {
-                black: '#040B1C', /* Changed from #050505 to Deep Midnight Blue */
-                dark: '#020510',  /* Changed from #000000 to Darker Navy */
-                blue: '#1ac1dd',
-                blueGlow: 'rgba(26, 193, 221, 0.5)',
-                glass: 'rgba(26, 193, 221, 0.05)', /* Added slight blue tint to glass */
-                glassBorder: 'rgba(255, 255, 255, 0.08)',
-                purple: '#8B5CF6',
+                black: '#0F172A', /* Slate 900 for primary text */
+                dark: '#F8FAFC',  /* Slate 50 for light backgrounds */
+                blue: '#0EA5E9',  /* Vibrant blue for light theme */
+                blueGlow: 'rgba(14, 165, 233, 0.15)',
+                glass: 'rgba(255, 255, 255, 0.7)', 
+                glassBorder: 'rgba(15, 23, 42, 0.08)',
+                purple: '#7C3AED',
               }
             },
             fontFamily: {
@@ -79,8 +79,8 @@
     </script>
     <style>
       body {
-        background-color: #040B1C; /* Updated to Deep Blue */
-        color: #ffffff;
+        background-color: #FFFFFF;
+        color: #0F172A;
         overflow-x: hidden;
       }
       
@@ -89,26 +89,26 @@
         width: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #020510; 
+        background: #F8FAFC; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #1e293b; 
+        background: #CBD5E1; 
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #1ac1dd; 
+        background: #0EA5E9; 
       }
 
       /* Utility for glass effects */
       .glass-card {
-        background: rgba(26, 193, 221, 0.03); /* Slight blue tint */
+        background: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(15, 23, 42, 0.08);
       }
       
       .text-gradient {
-        background: linear-gradient(to right, #ffffff, #94a3b8);
+        background: linear-gradient(to right, #0F172A, #475569);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
       }
