@@ -74,31 +74,19 @@ const EnrollmentWidget: React.FC = () => {
   const sessionCountRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    // Session Storage Management
-    const storedCount = sessionStorage.getItem('enrollment_notification_count');
-    if (storedCount) {
-      sessionCountRef.current = parseInt(storedCount, 10);
-    } else {
-      sessionStorage.setItem('enrollment_notification_count', '0');
-    }
+  const triggerNotificationRef = useRef<() => void>(() => {});
 
-    if (sessionCountRef.current >= MAX_NOTIFICATIONS_PER_SESSION) {
-      return;
-    }
+  const scheduleNextNotification = React.useCallback(() => {
+    if (sessionCountRef.current >= MAX_NOTIFICATIONS_PER_SESSION) return;
 
-    // Initial Start
-    const startTimeout = setTimeout(() => {
-      triggerNotification();
-    }, INITIAL_DELAY);
-
-    return () => {
-      clearTimeout(startTimeout);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+    const randomInterval = Math.floor(Math.random() * (MAX_INTERVAL - MIN_INTERVAL + 1) + MIN_INTERVAL);
+    
+    timeoutRef.current = setTimeout(() => {
+      triggerNotificationRef.current();
+    }, randomInterval);
   }, []);
 
-  const triggerNotification = () => {
+  const triggerNotification = React.useCallback(() => {
     if (sessionCountRef.current >= MAX_NOTIFICATIONS_PER_SESSION) return;
 
     // Pick random notification
@@ -121,17 +109,35 @@ const EnrollmentWidget: React.FC = () => {
       setIsVisible(false);
       scheduleNextNotification();
     }, DISPLAY_DURATION);
-  };
+  }, [scheduleNextNotification]);
 
-  const scheduleNextNotification = () => {
-    if (sessionCountRef.current >= MAX_NOTIFICATIONS_PER_SESSION) return;
+  useEffect(() => {
+    triggerNotificationRef.current = triggerNotification;
+  }, [triggerNotification]);
 
-    const randomInterval = Math.floor(Math.random() * (MAX_INTERVAL - MIN_INTERVAL + 1) + MIN_INTERVAL);
-    
-    timeoutRef.current = setTimeout(() => {
+  useEffect(() => {
+    // Session Storage Management
+    const storedCount = sessionStorage.getItem('enrollment_notification_count');
+    if (storedCount) {
+      sessionCountRef.current = parseInt(storedCount, 10);
+    } else {
+      sessionStorage.setItem('enrollment_notification_count', '0');
+    }
+
+    if (sessionCountRef.current >= MAX_NOTIFICATIONS_PER_SESSION) {
+      return;
+    }
+
+    // Initial Start
+    const startTimeout = setTimeout(() => {
       triggerNotification();
-    }, randomInterval);
-  };
+    }, INITIAL_DELAY);
+
+    return () => {
+      clearTimeout(startTimeout);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [triggerNotification]);
 
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -140,8 +146,6 @@ const EnrollmentWidget: React.FC = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     scheduleNextNotification();
   };
-
-  if (sessionCountRef.current > MAX_NOTIFICATIONS_PER_SESSION && !isVisible) return null;
 
   return (
     <div 

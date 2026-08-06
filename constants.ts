@@ -1,4 +1,4 @@
-import { Clapperboard, MonitorPlay, Scissors, Wand2, Music, Layers, Palette, Laptop, Download, MessageCircle, Upload, GraduationCap } from 'lucide-react';
+import { Clapperboard, MonitorPlay, Scissors, Wand2, Music, Layers, Palette, Laptop, Download, MessageCircle, GraduationCap } from 'lucide-react';
 import { CurriculumModule, FAQItem, Review, VideoTestimonial, BentoFeature, Course } from './types';
 
 // Changed from Tickers to Editing Software/Terms

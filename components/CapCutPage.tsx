@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ArrowRight, PlayCircle, Zap, CheckCircle2, Scissors, Monitor, Film, CreditCard, Check, ChevronDown, Award, X, User, Mail, Phone, Music, Sparkles, Layers, Activity, Clock, Loader2, Calendar, Target, TrendingUp, Briefcase } from 'lucide-react';
-import { TRUSTED_CREATORS } from '../constants';
+import { ArrowRight, CheckCircle2, Monitor, Check, Award, X, User, Mail, Phone, Clock, Loader2, Calendar, Target, TrendingUp, Briefcase } from 'lucide-react';
+import CohortCurriculum from './CohortCurriculum';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -12,75 +12,24 @@ interface CapCutPageProps {
   setIsModalOpen: (isOpen: boolean) => void;
 }
 
-const CAPCUT_SYLLABUS = [
-  { 
-    id: 1, 
-    title: "Introduction – Start from Zero", 
-    description: "Kickstart your journey. Understand the interface, set up your workspace, and prepare for your first edit.", 
-    icon: PlayCircle 
-  },
-  { 
-    id: 2, 
-    title: "Basics of Video Editing (Step-by-Step)", 
-    description: "Learn the core pillars: Cutting, Trimming, Aspect Ratios, and the timeline workflow.", 
-    icon: Scissors 
-  },
-  { 
-    id: 3, 
-    title: "Mobile vs PC Editing – Which One is Best for You?", 
-    description: "A detailed comparison of workflow, flexibility, and power to help you choose the right platform.", 
-    icon: Monitor 
-  },
-  { 
-    id: 4, 
-    title: "Different Types of Videos You Can Create", 
-    description: "Explore Reels, Vlogs, Tutorials, and Cinematic edits to find your unique style and niche.", 
-    icon: Film 
-  },
-  { 
-    id: 5, 
-    title: "Free vs Paid CapCut – What’s Worth It?", 
-    description: "Maximize the free version and discover which Pro features are actually game-changers.", 
-    icon: CreditCard 
-  },
-  { 
-    id: 6, 
-    title: "CapCut Pro Features & Live Preview Walkthrough", 
-    description: "Deep dive into Auto-Cutout, AI Effects, Advanced Transitions, and vocal isolation.", 
-    icon: Zap 
-  },
-  {
-    id: 7,
-    title: "Audio Editing Made Easy",
-    description: "Add music, voiceovers, sound effects, and balance audio like a pro.",
-    icon: Music
-  },
-  {
-    id: 8,
-    title: "AI Tools & Smart Editing Features",
-    description: "Use CapCut AI for auto captions, smart effects, and faster editing.",
-    icon: Sparkles
-  },
-  {
-    id: 9,
-    title: "Masking & Visual Effects",
-    description: "Create cinematic looks, overlays, and professional effects using masking.",
-    icon: Layers
-  },
-  {
-    id: 10,
-    title: "Keyframe Animation & Motion Effects",
-    description: "Add smooth zooms, movements, and animations using keyframes.",
-    icon: Activity
-  }
+const ROW1_IMAGES = [
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542718/1_iebrcv.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542717/2_tnqd3s.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542721/7_yi7ls5.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542726/6_q8gogp.png"
 ];
 
-const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModalOpen }) => {
+const ROW2_IMAGES = [
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542720/8_ejub5z.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542718/4_irxyqs.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542726/3_ib9nh7.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542724/5_i2cypd.png"
+];
+
+const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
-  const curriculumRef = useRef<HTMLDivElement>(null);
   const certificateRef = useRef<HTMLDivElement>(null);
   const pricingRef = useRef<HTMLDivElement>(null);
   const mentorshipRef = useRef<HTMLDivElement>(null);
@@ -166,40 +115,6 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
             end: 'bottom top',
             scrub: true,
             },
-        });
-
-        // 2. Timeline Line Animation
-        gsap.fromTo(lineRef.current, 
-            { height: '0%' },
-            {
-              height: '100%',
-              ease: 'none',
-              scrollTrigger: {
-                trigger: '.cc-timeline-container',
-                start: 'top 60%',
-                end: 'bottom 80%',
-                scrub: 1,
-              }
-            }
-        );
-
-        // 3. Timeline Items Animation
-        const items = gsap.utils.toArray('.cc-timeline-item');
-        items.forEach((item: any, index) => {
-            gsap.fromTo(item,
-            { opacity: 0, x: 30, filter: 'blur(5px)' },
-            {
-                opacity: 1,
-                x: 0,
-                filter: 'blur(0px)',
-                duration: 0.6,
-                ease: 'power3.out',
-                scrollTrigger: {
-                    trigger: item,
-                    start: 'top 85%', 
-                    toggleActions: 'play none none reverse'
-                }
-            });
         });
         
         // 4. Certificate Animation
@@ -400,7 +315,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
          </div>
       </div>
 
-      {/* TRAINERS WORKED WITH SECTION - Moved to Second Section */}
+      {/* TRAINERS WORKED WITH SECTION - Two Row Marquee */}
       <section className="relative py-24 overflow-hidden border-t border-white/5 bg-brand-black">
         <div className="container mx-auto px-4 mb-16 text-center relative z-10">
           <h3 className="text-sm font-bold tracking-[0.2em] text-brand-blue uppercase mb-3">
@@ -414,41 +329,69 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
           </p>
         </div>
 
-        {/* Infinite Scroll Marquee */}
-        <div className="relative w-full overflow-hidden">
+        {/* Row 1 (Left) */}
+        <div className="relative w-full overflow-hidden mb-8">
           <div 
-              className="flex w-max items-center animate-marquee hover:[animation-play-state:paused] will-change-transform"
+              className="flex w-max items-center animate-marquee-left hover:[animation-play-state:paused] will-change-transform"
               style={{ 
-                  animation: 'marquee 60s linear infinite',
+                  animation: 'marquee-left 40s linear infinite',
                   width: 'max-content'
               }}
           >
-            {/* Triple the list to ensure smooth infinite loop on wide screens */}
-            {[...TRUSTED_CREATORS, ...TRUSTED_CREATORS, ...TRUSTED_CREATORS].map((creator, index) => (
+            {[...ROW1_IMAGES, ...ROW1_IMAGES, ...ROW1_IMAGES].map((image, index) => (
               <div 
-                key={`creator-${index}`}
-                className="mx-4 relative flex-shrink-0"
+                key={`row1-${index}`}
+                className="mx-2 md:mx-4 relative flex-shrink-0"
               >
-                {/* Card Container */}
                 <div className="
-                  w-[280px] h-[400px] md:w-[320px] md:h-[460px] 
-                  rounded-3xl overflow-hidden relative 
+                  w-[calc(100vw/3-16px)] h-[180px] md:w-[320px] md:h-[460px] 
+                  rounded-2xl md:rounded-3xl overflow-hidden relative 
                   border border-white/10
                   bg-brand-blue/5 backdrop-blur-sm
                   group
                 ">
-                  {/* Image */}
                   <img 
-                    src={creator.image} 
-                    alt={creator.name} 
+                    src={image} 
+                    alt={`Trainer ${index}`} 
                     loading="lazy"
                     decoding="async"
-                    width="320"
-                    height="460"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  
-                  {/* Subtle Gradient Overlay for Depth */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 via-transparent to-transparent opacity-80"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Row 2 (Right) */}
+        <div className="relative w-full overflow-hidden">
+          <div 
+              className="flex w-max items-center animate-marquee-right hover:[animation-play-state:paused] will-change-transform"
+              style={{ 
+                  animation: 'marquee-right 40s linear infinite',
+                  width: 'max-content'
+              }}
+          >
+            {[...ROW2_IMAGES, ...ROW2_IMAGES, ...ROW2_IMAGES].map((image, index) => (
+              <div 
+                key={`row2-${index}`}
+                className="mx-2 md:mx-4 relative flex-shrink-0"
+              >
+                <div className="
+                  w-[calc(100vw/3-16px)] h-[180px] md:w-[320px] md:h-[460px] 
+                  rounded-2xl md:rounded-3xl overflow-hidden relative 
+                  border border-white/10
+                  bg-brand-blue/5 backdrop-blur-sm
+                  group
+                ">
+                  <img 
+                    src={image} 
+                    alt={`Trainer ${index}`} 
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 via-transparent to-transparent opacity-80"></div>
                 </div>
               </div>
@@ -457,117 +400,25 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ onBack, isModalOpen, setIsModal
         </div>
 
         <style>{`
-            @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-33.33%); }
+            @keyframes marquee-left {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-33.33%); }
             }
-            .animate-marquee {
-            animation: marquee 60s linear infinite;
+            @keyframes marquee-right {
+              0% { transform: translateX(-33.33%); }
+              100% { transform: translateX(0); }
+            }
+            .animate-marquee-left {
+              animation: marquee-left 40s linear infinite;
+            }
+            .animate-marquee-right {
+              animation: marquee-right 40s linear infinite;
             }
         `}</style>
       </section>
 
-      {/* Curriculum Preview - Animated Timeline */}
-      <section ref={curriculumRef} className="py-24 relative overflow-hidden">
-        {/* Background Grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px] opacity-20 pointer-events-none"></div>
-        
-        <div className="container mx-auto px-4 lg:px-8 relative z-10">
-            <div className="flex flex-col lg:flex-row gap-16 lg:gap-24 items-start">
-                
-                {/* Left Side: Sticky Text */}
-                <div className="lg:w-1/3 lg:sticky lg:top-32">
-                    <span className="inline-block py-1 px-3 rounded-full bg-white/5 border border-white/10 text-xs font-medium tracking-widest text-brand-blue uppercase mb-6">
-                        Syllabus
-                    </span>
-                    <h2 className="font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
-                        What You'll <br/> <span className="text-brand-blue italic">Master</span>
-                    </h2>
-                    <p className="text-gray-400 text-lg leading-relaxed mb-8">
-                        A complete breakdown of the mobile editing workflow used by top creators.
-                    </p>
-                    <div className="hidden lg:block w-20 h-1 bg-brand-blue rounded-full shadow-[0_0_15px_rgba(26,193,221,0.5)]"></div>
-                    
-                    <div className="mt-10 p-6 rounded-2xl bg-brand-blue/10 border border-brand-blue/20 backdrop-blur-sm hidden lg:block">
-                        <div className="flex items-start gap-4">
-                            <CheckCircle2 className="w-6 h-6 text-brand-blue flex-shrink-0 mt-1" />
-                            <div>
-                                <h4 className="text-white font-bold mb-1">Certificate of Completion</h4>
-                                <p className="text-sm text-gray-400">Get a verified certificate to showcase your mobile editing skills.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right Side: Timeline */}
-                <div className="cc-timeline-container relative lg:w-2/3 pl-4 md:pl-0 w-full">
-                    {/* The Base Vertical Line */}
-                    <div className="absolute left-[19px] md:left-[27px] top-8 bottom-12 w-[2px] bg-white/5 rounded-full z-0">
-                        {/* The Active Vertical Line (Animated) */}
-                        <div ref={lineRef} className="w-full bg-gradient-to-b from-brand-blue via-cyan-400 to-brand-blue/10 shadow-[0_0_10px_rgba(26,193,221,0.5)] rounded-full h-0"></div>
-                    </div>
-
-                    <div className="space-y-8">
-                        {CAPCUT_SYLLABUS.map((module, index) => (
-                            <div key={module.id} className="cc-timeline-item relative flex items-start gap-6 md:gap-10 opacity-0">
-                                {/* Dot on the line */}
-                                <div className="relative z-10 flex-shrink-0 mt-6">
-                                    <div className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-brand-dark border border-white/10 flex items-center justify-center shadow-2xl relative">
-                                        <div className="absolute inset-0 rounded-full bg-brand-blue/10 blur-md"></div>
-                                        <div className="w-3 h-3 md:w-4 md:h-4 rounded-full bg-brand-blue border-2 border-white shadow-[0_0_10px_rgba(26,193,221,0.8)] z-10"></div>
-                                    </div>
-                                </div>
-                                
-                                {/* Content Card */}
-                                <div className="flex-grow group">
-                                    <div className="relative overflow-hidden p-6 md:p-8 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md transition-all duration-300 hover:border-brand-blue/40 hover:bg-white/[0.05] hover:shadow-[0_10px_30px_-10px_rgba(26,193,221,0.1)]">
-                                        
-                                        {/* Hover Gradient Effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-r from-brand-blue/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-                                        <div className="relative z-10 flex flex-col md:flex-row gap-6 md:items-center">
-                                            {/* Icon Box */}
-                                            <div className="flex-shrink-0">
-                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-white/5 to-white/0 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-inner">
-                                                    <module.icon className="w-6 h-6 text-brand-blue drop-shadow-[0_0_5px_rgba(26,193,221,0.8)]" />
-                                                </div>
-                                            </div>
-
-                                            {/* Text Content */}
-                                            <div>
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <span className="text-xs font-mono text-brand-blue/80 border border-brand-blue/20 px-2 py-0.5 rounded uppercase tracking-wider">Module 0{module.id}</span>
-                                                </div>
-                                                <h3 className="text-xl font-bold text-white mb-2 group-hover:text-brand-blue transition-colors">
-                                                    {module.title}
-                                                </h3>
-                                                <p className="text-gray-400 text-sm leading-relaxed">
-                                                    {module.description}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* NEW CTA: After Syllabus */}
-                    <div className="mt-16 flex justify-center">
-                        <button 
-                            onClick={handleEnrollClick}
-                            className="group relative px-8 py-4 bg-brand-blue text-black font-bold rounded-full overflow-hidden hover:scale-105 transition-all duration-300"
-                        >
-                            <span className="relative z-10 flex items-center gap-2">
-                                Start Learning Today <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                            </span>
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-      </section>
+      {/* Cohort Curriculum Section */}
+      <CohortCurriculum onEnroll={handleEnrollClick} />
 
       {/* NEW CERTIFICATE SECTION */}
       <section ref={certificateRef} className="py-24 bg-brand-dark relative overflow-hidden">

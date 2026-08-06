@@ -41,7 +41,7 @@ export interface FAQItem {
 export interface BentoFeature {
   title: string;
   description: string;
-  icon: any; // Lucide icon type
+  icon: React.ElementType;
   size: 'sm' | 'md' | 'lg';
 }
 
@@ -61,7 +61,7 @@ declare global {
     fbq: (
       action: string, 
       eventName: string, 
-      params?: Record<string, any>
+      params?: Record<string, unknown>
     ) => void;
   }
 }

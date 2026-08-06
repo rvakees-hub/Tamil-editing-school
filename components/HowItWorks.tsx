@@ -45,8 +45,8 @@ const HowItWorks: React.FC = () => {
       );
 
       // Timeline Items Animation
-      const items = gsap.utils.toArray('.timeline-item');
-      items.forEach((item: any, index) => {
+      const items = gsap.utils.toArray<HTMLElement>('.timeline-item');
+      items.forEach((item, index) => {
         gsap.fromTo(item,
           { opacity: 0, x: 50, filter: 'blur(10px)' },
           {
@@ -100,10 +100,7 @@ const HowItWorks: React.FC = () => {
                 </div>
 
                 <div className="space-y-8">
-                    {HOW_IT_WORKS.map((step, index) => {
-                        // Dynamic color mapping based on index or predefined accent
-                        const isEven = index % 2 === 0;
-                        
+                    {HOW_IT_WORKS.map((step) => {
                         return (
                             <div key={step.id} className="timeline-item relative flex items-start gap-6 md:gap-10">
                                 {/* Dot on the line */}

@@ -1,5 +1,18 @@
 import React from 'react';
-import { TRUSTED_CREATORS } from '../constants';
+
+const ROW1_IMAGES = [
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542718/1_iebrcv.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542717/2_tnqd3s.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542721/7_yi7ls5.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542726/6_q8gogp.png"
+];
+
+const ROW2_IMAGES = [
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542720/8_ejub5z.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542718/4_irxyqs.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542726/3_ib9nh7.png",
+  "https://res.cloudinary.com/drztakw1p/image/upload/v1774542724/5_i2cypd.png"
+];
 
 const TrustedBy: React.FC = () => {
   return (
@@ -16,41 +29,71 @@ const TrustedBy: React.FC = () => {
         </p>
       </div>
 
-      {/* Infinite Scroll Marquee */}
-      <div className="relative w-full overflow-hidden">
+      {/* Infinite Scroll Marquee - Row 1 (Left) */}
+      <div className="relative w-full overflow-hidden mb-8">
         <div 
-            className="flex w-max items-center animate-marquee hover:[animation-play-state:paused] will-change-transform"
+            className="flex w-max items-center animate-marquee-left hover:[animation-play-state:paused] will-change-transform"
             style={{ 
-                animation: 'marquee 60s linear infinite',
+                animation: 'marquee-left 40s linear infinite',
                 width: 'max-content'
             }}
         >
           {/* Triple the list to ensure smooth infinite loop on wide screens */}
-          {[...TRUSTED_CREATORS, ...TRUSTED_CREATORS, ...TRUSTED_CREATORS].map((creator, index) => (
+          {[...ROW1_IMAGES, ...ROW1_IMAGES, ...ROW1_IMAGES].map((image, index) => (
             <div 
-              key={`creator-${index}`}
-              className="mx-4 relative flex-shrink-0"
+              key={`row1-${index}`}
+              className="mx-2 md:mx-4 relative flex-shrink-0"
             >
-              {/* Card Container */}
               <div className="
-                w-[280px] h-[400px] md:w-[320px] md:h-[460px] 
-                rounded-3xl overflow-hidden relative 
+                w-[calc(100vw/3-16px)] h-[180px] md:w-[320px] md:h-[460px] 
+                rounded-2xl md:rounded-3xl overflow-hidden relative 
                 border border-slate-200
                 bg-slate-50 backdrop-blur-sm
                 group
               ">
-                {/* Image */}
                 <img 
-                  src={creator.image} 
-                  alt={creator.name} 
+                  src={image} 
+                  alt={`Trusted creator ${index}`} 
                   loading="lazy"
                   decoding="async"
-                  width="320"
-                  height="460"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                
-                {/* Subtle Gradient Overlay for Depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Infinite Scroll Marquee - Row 2 (Right) */}
+      <div className="relative w-full overflow-hidden">
+        <div 
+            className="flex w-max items-center animate-marquee-right hover:[animation-play-state:paused] will-change-transform"
+            style={{ 
+                animation: 'marquee-right 40s linear infinite',
+                width: 'max-content'
+            }}
+        >
+          {/* Triple the list to ensure smooth infinite loop on wide screens */}
+          {[...ROW2_IMAGES, ...ROW2_IMAGES, ...ROW2_IMAGES].map((image, index) => (
+            <div 
+              key={`row2-${index}`}
+              className="mx-2 md:mx-4 relative flex-shrink-0"
+            >
+              <div className="
+                w-[calc(100vw/3-16px)] h-[180px] md:w-[320px] md:h-[460px] 
+                rounded-2xl md:rounded-3xl overflow-hidden relative 
+                border border-slate-200
+                bg-slate-50 backdrop-blur-sm
+                group
+              ">
+                <img 
+                  src={image} 
+                  alt={`Trusted creator ${index}`} 
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60"></div>
               </div>
             </div>
@@ -59,12 +102,19 @@ const TrustedBy: React.FC = () => {
       </div>
 
       <style>{`
-        @keyframes marquee {
+        @keyframes marquee-left {
           0% { transform: translateX(0); }
           100% { transform: translateX(-33.33%); }
         }
-        .animate-marquee {
-          animation: marquee 60s linear infinite;
+        @keyframes marquee-right {
+          0% { transform: translateX(-33.33%); }
+          100% { transform: translateX(0); }
+        }
+        .animate-marquee-left {
+          animation: marquee-left 40s linear infinite;
+        }
+        .animate-marquee-right {
+          animation: marquee-right 40s linear infinite;
         }
       `}</style>
     </section>

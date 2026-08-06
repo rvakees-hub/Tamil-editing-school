@@ -35,18 +35,6 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-brand-blue/5 blur-[120px] rounded-full pointer-events-none" />
       
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
-        <div className="courses-header text-center mb-20">
-            <span className="inline-block py-1 px-3 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium tracking-widest text-slate-500 uppercase mb-4">
-                Curriculum
-            </span>
-            <h2 className="text-5xl md:text-7xl font-serif text-brand-black mb-6">
-                Choose Your <span className="italic text-brand-blue">Path</span>
-            </h2>
-            <p className="text-slate-600 max-w-xl mx-auto text-lg">
-                Whether you're editing on a phone or a workstation, we have a specialized path to help you master the craft.
-            </p>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
           {COURSES.map((course) => {
             const isAvailable = course.status === 'available';
