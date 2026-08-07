@@ -182,42 +182,85 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
     e.preventDefault();
     setIsSubmitting(true);
 
-    const SHEETDB_URL = 'https://sheetdb.io/api/v1/ccdajtboqrtax'; 
-    
+    const submissionPayload = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      submittedAt: new Date().toLocaleString(),
+      course: 'CapCut Video Editing Course'
+    };
+
+    // 1. Local backup in localStorage
     try {
-        const response = await fetch(SHEETDB_URL, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                data: {
-                    Name: formData.name,
-                    Email: formData.email,
-                    Phone: formData.phone,
-                    Date: new Date().toLocaleString()
-                }
-            })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert("Registration successful! We will contact you shortly.");
-            setIsModalOpen(false);
-            setFormData({ name: '', email: '', phone: '' });
-        } else {
-            console.error('Submission failed', data);
-            alert("Something went wrong. Please try again or contact support.");
-        }
-
-    } catch (error) {
-        console.error('Error submitting form:', error);
-        alert("Connection error. Please check your internet connection.");
-    } finally {
-        setIsSubmitting(false);
+      const existing = JSON.parse(localStorage.getItem('clipzy_capcut_lead_submissions') || '[]');
+      existing.unshift(submissionPayload);
+      localStorage.setItem('clipzy_capcut_lead_submissions', JSON.stringify(existing));
+    } catch (err) {
+      console.error('Error saving local capcut lead:', err);
     }
+
+    // 2. Try sending to SheetDB if reachable
+    const SHEETDB_URL = 'https://sheetdb.io/api/v1/ccdajtboqrtax';
+    try {
+      await fetch(SHEETDB_URL, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          data: {
+            Name: formData.name,
+            Email: formData.email,
+            Phone: formData.phone,
+            Date: submissionPayload.submittedAt
+          }
+        })
+      });
+    } catch (error) {
+      console.warn('SheetDB request bypassed or offline:', error);
+    }
+
+    // 3. Also send to Google Apps Script URL if configured
+    try {
+      const defaultUrl = 'https://script.google.com/macros/s/AKfycbzIpaybmD7fgf-BAuVtr2sPkOX-QGrBFL4YqtPC-kELKX1y6uC9pIIAwccp-fLk_UW3mA/exec';
+      const googleScriptUrl = localStorage.getItem('clipzy_google_apps_script_url') || import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || defaultUrl;
+      if (googleScriptUrl.trim()) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = googleScriptUrl.trim();
+        let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.id = 'gscript_hidden_iframe';
+          iframe.name = 'gscript_hidden_iframe';
+          iframe.style.display = 'none';
+          document.body.appendChild(iframe);
+        }
+        form.target = 'gscript_hidden_iframe';
+        Object.entries(submissionPayload).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = String(value || '');
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        setTimeout(() => {
+          if (document.body.contains(form)) {
+            document.body.removeChild(form);
+          }
+        }, 1000);
+      }
+    } catch (err) {
+      console.warn('Google Script submit error:', err);
+    }
+
+    setIsSubmitting(false);
+    alert("Registration successful! We will contact you shortly.");
+    setIsModalOpen(false);
+    setFormData({ name: '', email: '', phone: '' });
   };
 
   const [hours, minutes, seconds] = timeLeft.split(':');

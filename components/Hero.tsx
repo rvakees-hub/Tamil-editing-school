@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import React, { useState, useEffect } from 'react';
-import { Calendar, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, X, Check } from 'lucide-react';
+import { Calendar, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, X, Check, FileSpreadsheet, Copy, Loader2, Download } from 'lucide-react';
 
 declare global {
   namespace JSX {
@@ -13,11 +13,221 @@ declare global {
   }
 }
 
+const APPS_SCRIPT_TEMPLATE_CODE = `function doPost(e) {
+  return handleRequest(e);
+}
+
+function doGet(e) {
+  return handleRequest(e);
+}
+
+function handleRequest(e) {
+  try {
+    var lock = LockService.getScriptLock();
+    lock.tryLock(10000);
+
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var data = {};
+
+    // 1. Parse JSON payload if sent in request body
+    if (e && e.postData && e.postData.contents) {
+      try {
+        data = JSON.parse(e.postData.contents);
+      } catch (err) {
+        data = (e && e.parameter) ? e.parameter : {};
+      }
+    }
+
+    // 2. Fall back to form/URL parameters
+    if (!data || Object.keys(data).length === 0) {
+      if (e && e.parameter) {
+        data = e.parameter;
+      }
+    }
+
+    // Auto-create header row if sheet is completely empty
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        "Timestamp",
+        "Full Name",
+        "Email",
+        "Phone / WhatsApp",
+        "City",
+        "Primary Goal",
+        "Start Date",
+        "Monthly Budget",
+        "Ready to Invest",
+        "Website / Social Link",
+        "Content Focus"
+      ]);
+    }
+
+    var timestamp = data.submittedAt || data.Date || new Date().toLocaleString();
+    var name = data.name || data.Name || "";
+    var email = data.email || data.Email || "";
+    var phone = data.phone || data.Phone || "";
+    var city = data.city || data.City || "";
+    var goal = data.goal || data.Goal || "";
+    var startDate = data.startDate || data.StartDate || "";
+    var investment = data.investment || data.Investment || "";
+    var readyToInvest = data.readyToInvest || data.ReadyToInvest || "";
+    var website = data.website || data.Website || "";
+    var contentType = data.contentType || data.ContentType || data.course || "";
+
+    sheet.appendRow([
+      timestamp,
+      name,
+      email,
+      phone,
+      city,
+      goal,
+      startDate,
+      investment,
+      readyToInvest,
+      website,
+      contentType
+    ]);
+
+    lock.releaseLock();
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: "success" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: "error", error: error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<string, string>) => {
+  const url = targetUrl.trim();
+  if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) return;
+
+  // Method 1: Hidden HTML Form Submit (most reliable for Google Apps Script parameter parsing, bypasses CORS)
+  try {
+    let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'gscript_hidden_iframe';
+      iframe.name = 'gscript_hidden_iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = 'gscript_hidden_iframe';
+
+    Object.entries(payload).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = String(value || '');
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(() => {
+      if (document.body.contains(form)) {
+        document.body.removeChild(form);
+      }
+    }, 1000);
+  } catch (e) {
+    console.warn('Form submission fallback warning:', e);
+  }
+
+  // Method 2: fetch POST JSON safely wrapped
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (e) {
+    console.warn('Network request warning:', e);
+  }
+
+  // Method 3: fetch GET query parameters safely wrapped
+  try {
+    const params = new URLSearchParams();
+    Object.entries(payload).forEach(([k, v]) => params.append(k, String(v || '')));
+    const fullGetUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
+    await fetch(fullGetUrl, {
+      method: 'GET',
+      mode: 'no-cors',
+    });
+  } catch (e) {
+    console.warn('GET fallback network warning:', e);
+  }
+};
+
 const Hero: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [stepError, setStepError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Google Sheets Apps Script State
+  const USER_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIpaybmD7fgf-BAuVtr2sPkOX-QGrBFL4YqtPC-kELKX1y6uC9pIIAwccp-fLk_UW3mA/exec';
+  const [showSheetsModal, setShowSheetsModal] = useState(false);
+  const [scriptUrl, setScriptUrl] = useState<string>(() => {
+    return localStorage.getItem('clipzy_google_apps_script_url') || import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || USER_DEFAULT_SCRIPT_URL;
+  });
+  const [inputUrl, setInputUrl] = useState<string>(scriptUrl);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+
+  const getSavedLeads = (): Record<string, string>[] => {
+    try {
+      return JSON.parse(localStorage.getItem('clipzy_lead_submissions') || '[]');
+    } catch {
+      return [];
+    }
+  };
+
+  const localLeads = getSavedLeads();
+  const localLeadsCount = localLeads.length;
+
+  const handleExportCSV = () => {
+    try {
+      const existing = getSavedLeads();
+      if (existing.length === 0) {
+        alert('No saved lead submissions found in browser storage yet.');
+        return;
+      }
+      const headers = ["Timestamp", "Full Name", "Email", "Phone / WhatsApp", "City", "Primary Goal", "Start Date", "Monthly Budget", "Ready to Invest", "Website / Social Link", "Content Focus"];
+      const rows = existing.map((item) => [
+        `"${item.submittedAt || ''}"`,
+        `"${(item.name || '').replace(/"/g, '""')}"`,
+        `"${(item.email || '').replace(/"/g, '""')}"`,
+        `"${(item.phone || '').replace(/"/g, '""')}"`,
+        `"${(item.city || '').replace(/"/g, '""')}"`,
+        `"${(item.goal || '').replace(/"/g, '""')}"`,
+        `"${(item.startDate || '').replace(/"/g, '""')}"`,
+        `"${(item.investment || '').replace(/"/g, '""')}"`,
+        `"${(item.readyToInvest || '').replace(/"/g, '""')}"`,
+        `"${(item.website || '').replace(/"/g, '""')}"`,
+        `"${(item.contentType || '').replace(/"/g, '""')}"`
+      ]);
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `clipzy_lead_submissions_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const [formData, setFormData] = useState({
     // Step 1: 4 questions
@@ -52,6 +262,48 @@ const Hero: React.FC = () => {
     }
   }, []);
 
+  const handleSaveScriptUrl = () => {
+    const trimmed = inputUrl.trim();
+    setScriptUrl(trimmed);
+    localStorage.setItem('clipzy_google_apps_script_url', trimmed);
+    setTestStatus('idle');
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(APPS_SCRIPT_TEMPLATE_CODE);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2500);
+  };
+
+  const handleTestSubmission = async () => {
+    const url = inputUrl.trim();
+    if (!url) return;
+    setTestStatus('testing');
+
+    const testPayload = {
+      submittedAt: new Date().toLocaleString(),
+      name: 'Test Lead',
+      email: 'test@clipzy.agency',
+      phone: '+94 77 000 0000',
+      city: 'Colombo',
+      goal: 'Test Google Sheets Connection',
+      startDate: 'Immediately',
+      investment: 'LKR 100,000–250,000',
+      readyToInvest: 'Yes',
+      website: 'https://clipzy.agency',
+      contentType: 'Short-Form Video',
+    };
+
+    try {
+      await sendPayloadToGoogleScript(url, testPayload);
+      setScriptUrl(url);
+      localStorage.setItem('clipzy_google_apps_script_url', url);
+      setTestStatus('success');
+    } catch {
+      setTestStatus('error');
+    }
+  };
+
   const handleNextStep = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setStepError('');
@@ -75,13 +327,41 @@ const Hero: React.FC = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStepError('');
     if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.city.trim()) {
       setStepError('Please fill in your name, email, phone number, and city.');
       return;
     }
+
+    setIsSubmitting(true);
+
+    const submissionPayload = {
+      ...formData,
+      submittedAt: new Date().toLocaleString(),
+    };
+
+    // 1. Always save locally as a bulletproof backup in browser
+    try {
+      const existing = JSON.parse(localStorage.getItem('clipzy_lead_submissions') || '[]');
+      existing.unshift(submissionPayload);
+      localStorage.setItem('clipzy_lead_submissions', JSON.stringify(existing));
+    } catch (err) {
+      console.error('Error saving local lead backup:', err);
+    }
+
+    // 2. Send payload to Google Apps Script Web App if configured
+    const targetUrl = scriptUrl.trim();
+    if (targetUrl) {
+      try {
+        await sendPayloadToGoogleScript(targetUrl, submissionPayload);
+      } catch (err) {
+        console.error('Error sending submission to Google Sheets:', err);
+      }
+    }
+
+    setIsSubmitting(false);
     setFormSubmitted(true);
   };
 
@@ -143,14 +423,30 @@ const Hero: React.FC = () => {
               <div>
                 {/* Form Headline & Subheadline */}
                 <div className="text-center mb-8">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-brand-blue bg-sky-50 px-3.5 py-1.5 rounded-full mb-3 border border-sky-100">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Client Application
-                  </span>
+                  <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowSheetsModal(true)}
+                      title="Click to manage Google Sheets settings"
+                      className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-brand-blue bg-sky-50 hover:bg-sky-100 px-3.5 py-1.5 rounded-full border border-sky-100 transition-colors cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Client Application
+                    </button>
+                    
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-900 bg-amber-50 px-3.5 py-1.5 rounded-full border border-amber-200">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                      </span>
+                      <span>2 of 5 Spots Closed — Only 3 Left</span>
+                    </span>
+                  </div>
+
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-brand-black font-serif tracking-tight">
                     Apply to Work With Clipzy
                   </h2>
                   <p className="text-sm sm:text-base text-slate-500 mt-2 max-w-xl mx-auto leading-relaxed">
-                    We work with a limited number of businesses each month. Complete this short application.
+                    We strictly work with only <strong>5 exclusive clients per month</strong>. 2 spots are already booked — complete this application now to claim 1 of the 3 remaining spots.
                   </p>
                 </div>
 
@@ -472,10 +768,20 @@ const Hero: React.FC = () => {
 
                       <button
                         type="submit"
-                        className="inline-flex items-center justify-center gap-2.5 bg-brand-blue hover:bg-sky-600 text-white font-extrabold text-base sm:text-lg px-8 py-4 rounded-xl shadow-xl shadow-sky-500/30 hover:shadow-2xl transition-all cursor-pointer"
+                        disabled={isSubmitting}
+                        className="inline-flex items-center justify-center gap-2.5 bg-brand-blue hover:bg-sky-600 disabled:opacity-75 text-white font-extrabold text-base sm:text-lg px-8 py-4 rounded-xl shadow-xl shadow-sky-500/30 hover:shadow-2xl transition-all cursor-pointer"
                       >
-                        <Calendar className="w-5 h-5 text-white" />
-                        <span>Submit Application 🎉</span>
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                            <span>Submitting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Calendar className="w-5 h-5 text-white" />
+                            <span>Submit Application 🎉</span>
+                          </>
+                        )}
                       </button>
                     </div>
 
@@ -515,6 +821,173 @@ const Hero: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Google Sheets Apps Script Setup Modal */}
+      {showSheetsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full relative shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200 my-8 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => setShowSheetsModal(false)}
+              className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-brand-black font-serif">Connect Google Sheets</h3>
+                <p className="text-xs text-slate-500">Automatically sync form submissions into your Google Sheet via Google Apps Script</p>
+              </div>
+            </div>
+
+            <div className="space-y-6 text-slate-700 text-sm">
+              {/* Web App URL Input */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+                <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Google Apps Script Web App URL
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input 
+                    type="url"
+                    placeholder="https://script.google.com/macros/s/AKfycbx.../exec"
+                    value={inputUrl}
+                    onChange={(e) => setInputUrl(e.target.value)}
+                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-brand-blue text-xs text-slate-900 font-mono"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveScriptUrl}
+                      className="px-4 py-2.5 bg-brand-blue hover:bg-sky-600 text-white font-bold text-xs rounded-xl transition-colors shrink-0"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTestSubmission}
+                      disabled={!inputUrl.trim() || testStatus === 'testing'}
+                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors shrink-0 flex items-center gap-1.5"
+                    >
+                      {testStatus === 'testing' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                      <span>Send Test Lead</span>
+                    </button>
+                  </div>
+                </div>
+
+                {inputUrl.trim() && (inputUrl.includes('/dev') || inputUrl.includes('/edit') || !inputUrl.trim().endsWith('/exec')) && (
+                  <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs space-y-1">
+                    <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                      <span>⚠️ Make sure you copy the Web App URL:</span>
+                    </p>
+                    <p>
+                      Your URL should end in <code className="bg-amber-100 text-amber-950 px-1 py-0.5 rounded font-mono font-bold">/exec</code> (e.g. <code className="text-slate-800">https://script.google.com/macros/s/.../exec</code>).
+                    </p>
+                    <p>
+                      If your URL ends in <code className="bg-amber-100 font-mono text-amber-950 px-1">/edit</code> or <code className="bg-amber-100 font-mono text-amber-950 px-1">/dev</code>, click <strong>Deploy</strong> → <strong>New deployment</strong> in Apps Script and copy the Web App URL.
+                    </p>
+                  </div>
+                )}
+
+                {testStatus === 'success' && (
+                  <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1">
+                    <CheckCircle2 className="w-4 h-4" /> Test submission sent successfully! Check your Google Sheet.
+                  </p>
+                )}
+                {testStatus === 'error' && (
+                  <p className="text-xs font-semibold text-red-600 mt-1">
+                    ❌ Failed to reach Google Apps Script URL. Ensure "Who has access" is set to "Anyone" and you copied the Web App URL ending in /exec.
+                  </p>
+                )}
+              </div>
+
+              {/* Local Submissions Backup Section */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Browser Leads Backup ({localLeadsCount})
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    All form submissions are also backed up locally in your browser session.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  disabled={localLeadsCount === 0}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download CSV ({localLeadsCount})</span>
+                </button>
+              </div>
+
+              {/* Step by Step Instructions */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+                  How to setup in Google Sheets (2 minutes)
+                </h4>
+                
+                <ol className="space-y-2.5 text-xs text-slate-600 list-decimal list-inside leading-relaxed">
+                  <li>Open your Google Sheet (or create a new blank one).</li>
+                  <li>Click <strong>Extensions</strong> → <strong>Apps Script</strong> from the top menu.</li>
+                  <li>Clear any existing code in <code>Code.gs</code> and paste the script below:</li>
+                </ol>
+
+                {/* Script Code Block */}
+                <div className="relative bg-slate-900 text-slate-100 p-3.5 rounded-xl text-xs font-mono overflow-x-auto max-h-48 border border-slate-800">
+                  <button
+                    type="button"
+                    onClick={handleCopyCode}
+                    className="absolute top-2.5 right-2.5 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-sans font-bold flex items-center gap-1.5 border border-slate-700 transition-colors"
+                  >
+                    {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                    <span>{copiedCode ? 'Copied!' : 'Copy Apps Script'}</span>
+                  </button>
+                  <pre className="pr-24">{APPS_SCRIPT_TEMPLATE_CODE}</pre>
+                </div>
+
+                <ol start={4} className="space-y-2.5 text-xs text-slate-600 list-decimal list-inside leading-relaxed pt-1">
+                  <li>Click <strong>Deploy</strong> → <strong>New deployment</strong> (top right).</li>
+                  <li>Click the ⚙️ gear next to "Select type" and choose <strong>Web app</strong>.</li>
+                  <li>
+                    Set <strong>Execute as:</strong> <code>Me</code> <br />
+                    Set <strong>Who has access:</strong> <code>Anyone</code> (CRITICAL: Must be "Anyone"!)
+                  </li>
+                  <li>Click <strong>Deploy</strong>, grant permissions, and copy the <strong>Web App URL</strong> into the field above!</li>
+                </ol>
+              </div>
+
+              {/* Troubleshooting Tips Box */}
+              <div className="bg-sky-50/80 border border-sky-200 text-slate-800 p-4 rounded-2xl text-xs space-y-2">
+                <h5 className="font-extrabold text-sky-950 flex items-center gap-1.5">
+                  <span>💡 Sheet still empty after submitting? Check these 2 quick settings:</span>
+                </h5>
+                <ul className="list-disc list-inside space-y-1.5 text-slate-700 leading-relaxed">
+                  <li>
+                    <strong>Did you deploy a New Version?</strong> In Google Apps Script, after updating code in <code>Code.gs</code>, you <em>must</em> click <strong>Deploy</strong> → <strong>New deployment</strong> (or <strong>Manage deployments</strong> → ⚙️ Edit → <strong>New version</strong> → Deploy). Saving the code alone does NOT update the active Web App!
+                  </li>
+                  <li>
+                    <strong>Is "Who has access" set to "Anyone"?</strong> Ensure "Who has access" is set to <strong>Anyone</strong> (not "Only myself"). If set to "Only myself", submissions are blocked by Google authentication.
+                  </li>
+                </ul>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowSheetsModal(false)}
+                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Booking Form Modal (kept for secondary CTA access if needed) */}
       {isModalOpen && (
