@@ -104,67 +104,47 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
   const url = targetUrl.trim();
   if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) return;
 
-  // Method 1: Hidden HTML Form Submit (most reliable for Google Apps Script parameter parsing, bypasses CORS)
-  try {
-    let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
-    if (!iframe) {
-      iframe = document.createElement('iframe');
-      iframe.id = 'gscript_hidden_iframe';
-      iframe.name = 'gscript_hidden_iframe';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-    }
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = url;
-    form.target = 'gscript_hidden_iframe';
-
-    Object.entries(payload).forEach(([key, value]) => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = key;
-      input.value = String(value || '');
-      form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
-    setTimeout(() => {
-      if (document.body.contains(form)) {
-        document.body.removeChild(form);
+  // Use native form post targeting a hidden iframe.
+  // This bypasses browser CORS restrictions on Google Apps Script redirects and avoids "Failed to fetch" errors completely,
+  // while ensuring exactly 1 submission is sent without duplicates.
+  return new Promise<void>((resolve) => {
+    try {
+      let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'gscript_hidden_iframe';
+        iframe.name = 'gscript_hidden_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
       }
-    }, 1000);
-  } catch (e) {
-    console.warn('Form submission fallback warning:', e);
-  }
 
-  // Method 2: fetch POST JSON safely wrapped
-  try {
-    await fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify(payload),
-    });
-  } catch (e) {
-    console.warn('Network request warning:', e);
-  }
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = url;
+      form.target = 'gscript_hidden_iframe';
 
-  // Method 3: fetch GET query parameters safely wrapped
-  try {
-    const params = new URLSearchParams();
-    Object.entries(payload).forEach(([k, v]) => params.append(k, String(v || '')));
-    const fullGetUrl = url + (url.includes('?') ? '&' : '?') + params.toString();
-    await fetch(fullGetUrl, {
-      method: 'GET',
-      mode: 'no-cors',
-    });
-  } catch (e) {
-    console.warn('GET fallback network warning:', e);
-  }
+      Object.entries(payload).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = String(value || '');
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+
+      setTimeout(() => {
+        if (document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+        resolve();
+      }, 500);
+    } catch (err) {
+      console.error('Google Sheets submission error:', err);
+      resolve();
+    }
+  });
 };
 
 const Hero: React.FC = () => {
