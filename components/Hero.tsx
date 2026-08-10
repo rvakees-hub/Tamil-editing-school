@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import React, { useState, useEffect } from 'react';
-import { Calendar, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, X, Check, FileSpreadsheet, Copy, Loader2, Download } from 'lucide-react';
+import { Calendar, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, X, Check, FileSpreadsheet, Copy, Loader2, Download, MessageSquare } from 'lucide-react';
 
 declare global {
   namespace JSX {
@@ -147,7 +147,11 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
   });
 };
 
-const Hero: React.FC = () => {
+interface HeroProps {
+  onNavigateToThankYou?: () => void;
+}
+
+const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -341,8 +345,34 @@ const Hero: React.FC = () => {
       }
     }
 
+    // 3. Save lead payload in sessionStorage for Thank You page
+    try {
+      sessionStorage.setItem('clipzy_last_lead', JSON.stringify(submissionPayload));
+    } catch (err) {
+      console.error('Error saving lead to sessionStorage:', err);
+    }
+
+    // 4. Track TikTok Pixel conversion event
+    try {
+      if (typeof window !== 'undefined' && (window as Record<string, unknown>).ttq) {
+        const ttq = (window as Record<string, unknown>).ttq as { track: (event: string, params?: Record<string, unknown>) => void };
+        ttq.track('SubmitApplication', { content_name: 'Lead Application' });
+        ttq.track('CompleteRegistration');
+      }
+    } catch (err) {
+      console.warn('TikTok pixel tracking error:', err);
+    }
+
     setIsSubmitting(false);
     setFormSubmitted(true);
+
+    // Redirect to dedicated Thank You Page
+    if (onNavigateToThankYou) {
+      onNavigateToThankYou();
+    } else {
+      window.history.pushState({}, '', '/thank-you');
+      window.dispatchEvent(new Event('popstate'));
+    }
   };
 
   // Calculate percentage
@@ -774,27 +804,131 @@ const Hero: React.FC = () => {
 
               </div>
             ) : (
-              <div className="text-center py-10 space-y-5 animate-in zoom-in-95 duration-300">
-                <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                  <CheckCircle2 className="w-12 h-12" />
+              <div className="py-6 px-2 sm:px-4 text-center space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                
+                {/* Success Icon Badge */}
+                <div className="relative inline-flex items-center justify-center">
+                  <div className="absolute -inset-4 bg-emerald-500/15 rounded-full blur-xl animate-pulse"></div>
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-tr from-emerald-500 to-teal-400 text-white rounded-3xl flex items-center justify-center shadow-2xl shadow-emerald-500/30 relative z-10 transform -rotate-2">
+                    <CheckCircle2 className="w-12 h-12 sm:w-14 sm:h-14 stroke-[2.5]" />
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-3xl font-black text-brand-black font-serif">Application Received!</h3>
-                  <p className="text-slate-600 max-w-md mx-auto text-sm sm:text-base mt-2 leading-relaxed">
-                    Thank you, <span className="font-bold text-slate-900">{formData.name}</span>. Our growth team is reviewing your application and will reach out on WhatsApp/Email within 2 hours.
+
+                {/* Main Header & Subheader */}
+                <div className="max-w-xl mx-auto space-y-3">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200/80 shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Application Submitted Successfully</span>
+                  </div>
+
+                  <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-brand-black font-serif tracking-tight">
+                    Thank You, {formData.name || 'there'}! 🎉
+                  </h3>
+                  
+                  <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+                    Your application is officially registered. Our growth team is reviewing your business details and will reach out to you within <strong className="text-slate-900 font-extrabold">2 hours</strong>.
                   </p>
                 </div>
-                <div className="pt-2">
+
+                {/* Direct WhatsApp Call-to-Action Box */}
+                <div className="bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-50/30 border border-emerald-200/90 rounded-2xl p-5 sm:p-6 text-left max-w-xl mx-auto shadow-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/25">
+                        <MessageSquare className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-slate-900 text-base">Want a Faster Response?</h4>
+                        <p className="text-xs sm:text-sm text-slate-600">Connect with our strategy team on WhatsApp right away.</p>
+                      </div>
+                    </div>
+                    <a
+                      href={`https://wa.me/94741480209?text=${encodeURIComponent(`Hi Clipzy team! I just submitted my application under the name ${formData.name || 'a new client'}. I'd love to discuss my video growth strategy.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm px-5 py-3.5 rounded-xl shadow-lg shadow-emerald-600/25 hover:shadow-xl transition-all cursor-pointer whitespace-nowrap"
+                    >
+                      <MessageSquare className="w-4 h-4 fill-current" />
+                      <span>Chat on WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* What Happens Next Steps */}
+                <div className="max-w-xl mx-auto pt-2">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 text-center">
+                    What Happens Next?
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+                    <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl">
+                      <div className="w-7 h-7 bg-brand-blue/10 text-brand-blue font-black text-xs rounded-lg flex items-center justify-center mb-2">
+                        1
+                      </div>
+                      <h5 className="font-bold text-slate-900 text-sm mb-1">Application Review</h5>
+                      <p className="text-xs text-slate-500 leading-snug">We review your goals & target audience.</p>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl">
+                      <div className="w-7 h-7 bg-brand-blue/10 text-brand-blue font-black text-xs rounded-lg flex items-center justify-center mb-2">
+                        2
+                      </div>
+                      <h5 className="font-bold text-slate-900 text-sm mb-1">Direct Reachout</h5>
+                      <p className="text-xs text-slate-500 leading-snug">We message you at {formData.phone || 'your phone number'}.</p>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-xl">
+                      <div className="w-7 h-7 bg-brand-blue/10 text-brand-blue font-black text-xs rounded-lg flex items-center justify-center mb-2">
+                        3
+                      </div>
+                      <h5 className="font-bold text-slate-900 text-sm mb-1">Growth Call</h5>
+                      <p className="text-xs text-slate-500 leading-snug">We map out your custom video marketing roadmap.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submitted Summary Box */}
+                <div className="max-w-xl mx-auto bg-slate-50/80 border border-slate-200 rounded-2xl p-5 text-left text-xs sm:text-sm space-y-2">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-200/80">
+                    <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Submitted Details</span>
+                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> Logged & Saved
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-slate-600 pt-1">
+                    <div><span className="font-semibold text-slate-900">Name:</span> {formData.name}</div>
+                    <div><span className="font-semibold text-slate-900">Email:</span> {formData.email}</div>
+                    <div><span className="font-semibold text-slate-900">WhatsApp:</span> {formData.phone}</div>
+                    <div><span className="font-semibold text-slate-900">Location:</span> {formData.city}</div>
+                    <div className="sm:col-span-2"><span className="font-semibold text-slate-900">Primary Goal:</span> {formData.goal}</div>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button 
+                    type="button"
                     onClick={() => {
                       setFormSubmitted(false);
                       setCurrentStep(1);
+                      setFormData({
+                        goal: 'Get More Customers',
+                        startDate: 'Immediately',
+                        investment: 'LKR 100,000–250,000',
+                        readyToInvest: 'Yes',
+                        website: '',
+                        contentType: 'Short-Form (Reels / TikTok / Shorts)',
+                        name: '',
+                        email: '',
+                        phone: '',
+                        city: ''
+                      });
                     }}
-                    className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-sm transition-colors"
+                    className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-sm transition-colors cursor-pointer"
                   >
                     Submit Another Application
                   </button>
                 </div>
+
               </div>
             )}
           </div>
