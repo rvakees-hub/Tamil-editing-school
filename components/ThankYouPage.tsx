@@ -50,6 +50,22 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ onGoHome }) => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Track TikTok Pixel CompleteRegistration ONLY when temporary conversion success signal exists
+    try {
+      const isConversionPending = sessionStorage.getItem('clipzy_conversion_pending') === 'true';
+      if (isConversionPending) {
+        // Immediately clear the success signal so page refreshes or direct visits do NOT fire conversion again
+        sessionStorage.removeItem('clipzy_conversion_pending');
+
+        if (typeof window !== 'undefined' && (window as Record<string, unknown>).ttq) {
+          const ttq = (window as Record<string, unknown>).ttq as { track: (event: string, params?: Record<string, unknown>) => void };
+          ttq.track('CompleteRegistration');
+        }
+      }
+    } catch (err) {
+      console.warn('TikTok pixel CompleteRegistration tracking error:', err);
+    }
   }, []);
 
   const userName = lead?.name || 'Valued Client';

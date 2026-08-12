@@ -199,13 +199,13 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
       console.error('Error saving local capcut lead:', err);
     }
 
-    // 2. Try sending to SheetDB if reachable
+    // 2. Try sending to SheetDB if reachable (using no-cors to prevent browser CORS network errors)
     const SHEETDB_URL = 'https://sheetdb.io/api/v1/ccdajtboqrtax';
     try {
       await fetch(SHEETDB_URL, {
         method: 'POST',
+        mode: 'no-cors',
         headers: {
-          'Accept': 'application/json',
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -216,9 +216,11 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
             Date: submissionPayload.submittedAt
           }
         })
+      }).catch((error) => {
+        console.warn('SheetDB request bypassed or offline:', error);
       });
     } catch (error) {
-      console.warn('SheetDB request bypassed or offline:', error);
+      console.warn('SheetDB request error handled:', error);
     }
 
     // 3. Also send to Google Apps Script URL if configured
