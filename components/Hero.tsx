@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import React, { useState, useEffect } from 'react';
 import { Calendar, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, X, Check, FileSpreadsheet, Copy, Loader2, Download, MessageSquare } from 'lucide-react';
+import { identifyTikTokUser, trackTikTokEvent } from './tiktokPixel';
 
 declare global {
   namespace JSX {
@@ -348,8 +349,32 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
     // 3. Save lead payload in sessionStorage for Thank You page
     try {
       sessionStorage.setItem('clipzy_last_lead', JSON.stringify(submissionPayload));
+      sessionStorage.setItem('clipzy_conversion_pending', 'true');
     } catch (err) {
       console.error('Error saving lead to sessionStorage:', err);
+    }
+
+    // 4. Send TikTok PII identify and Lead event
+    try {
+      await identifyTikTokUser({
+        email: formData.email,
+        phone_number: formData.phone,
+        external_id: formData.email || formData.phone,
+      });
+
+      trackTikTokEvent('Lead', {
+        contents: [
+          {
+            content_id: 'lead_application',
+            content_type: 'product',
+            content_name: 'Lead Application Form',
+          },
+        ],
+        value: 100,
+        currency: 'USD',
+      });
+    } catch (err) {
+      console.warn('TikTok Lead tracking error:', err);
     }
 
     setIsSubmitting(false);

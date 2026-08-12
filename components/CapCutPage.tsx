@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, CheckCircle2, Monitor, Check, Award, X, User, Mail, Phone, Clock, Loader2, Calendar, Target, TrendingUp, Briefcase } from 'lucide-react';
 import CohortCurriculum from './CohortCurriculum';
+import { identifyTikTokUser, trackTikTokEvent } from './tiktokPixel';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -42,6 +43,18 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
   useEffect(() => {
     // Scroll to top on mount
     window.scrollTo(0, 0);
+
+    trackTikTokEvent('ViewContent', {
+      contents: [
+        {
+          content_id: 'capcut_editing_course',
+          content_type: 'product',
+          content_name: 'CapCut Video Editing Course',
+        },
+      ],
+      value: 100,
+      currency: 'USD',
+    });
 
     // Scroll Handler for Sticky Header
     const handleScroll = () => {
@@ -275,6 +288,43 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
       }
     } catch (err) {
       console.warn('Google Script submit error:', err);
+    }
+
+    // TikTok Pixel Identify PII and Track Lead / CompleteRegistration
+    try {
+      if (formData.email || formData.phone) {
+        await identifyTikTokUser({
+          email: formData.email,
+          phone_number: formData.phone,
+          external_id: formData.email || formData.phone,
+        });
+      }
+
+      trackTikTokEvent('Lead', {
+        contents: [
+          {
+            content_id: 'capcut_course_lead',
+            content_type: 'product',
+            content_name: 'CapCut Video Editing Course Lead',
+          },
+        ],
+        value: 100,
+        currency: 'USD',
+      });
+
+      trackTikTokEvent('CompleteRegistration', {
+        contents: [
+          {
+            content_id: 'capcut_registration_complete',
+            content_type: 'product',
+            content_name: 'CapCut Registration Completed',
+          },
+        ],
+        value: 100,
+        currency: 'USD',
+      });
+    } catch (err) {
+      console.warn('TikTok tracking error:', err);
     }
 
     setIsSubmitting(false);

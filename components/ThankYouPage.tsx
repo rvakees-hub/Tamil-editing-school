@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { identifyTikTokUser, trackTikTokEvent } from './tiktokPixel';
 import { 
   CheckCircle2, 
   Sparkles, 
@@ -50,7 +51,40 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ onGoHome }) => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+
+    const trackRegistration = async () => {
+      try {
+        const isConversionPending = sessionStorage.getItem('clipzy_conversion_pending') === 'true';
+        if (isConversionPending) {
+          sessionStorage.removeItem('clipzy_conversion_pending');
+
+          if (lead?.email || lead?.phone) {
+            await identifyTikTokUser({
+              email: lead.email,
+              phone_number: lead.phone,
+              external_id: lead.email || lead.phone,
+            });
+          }
+
+          trackTikTokEvent('CompleteRegistration', {
+            contents: [
+              {
+                content_id: 'agency_registration',
+                content_type: 'product',
+                content_name: 'Clipzy Client Registration',
+              },
+            ],
+            value: 100,
+            currency: 'USD',
+          });
+        }
+      } catch (err) {
+        console.warn('TikTok CompleteRegistration tracking error:', err);
+      }
+    };
+
+    trackRegistration();
+  }, [lead]);
 
   const userName = lead?.name || 'Valued Client';
   const whatsappNumber = '94741480209';

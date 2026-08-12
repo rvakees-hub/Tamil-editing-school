@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowUpRight, Lock, Sparkles, Smartphone, Clapperboard, MonitorPlay } from 'lucide-react';
 import { COURSES } from '../constants';
+import { trackTikTokEvent } from './tiktokPixel';
 
 interface CoursesProps {
   onSelectCourse: (courseId: string) => void;
@@ -18,14 +19,28 @@ const Courses: React.FC<CoursesProps> = ({ onSelectCourse }) => {
   }
 
   const handleCourseClick = (courseId: string) => {
-    // Track ViewContent event
+    const courseName = courseId === 'capcut' ? 'CapCut Mastery Course' : courseId;
+    // Track Facebook ViewContent event
     if (window.fbq) {
         window.fbq('track', 'ViewContent', {
-            content_name: courseId === 'capcut' ? 'CapCut Mastery Course' : courseId,
+            content_name: courseName,
             content_ids: [courseId],
             content_type: 'product'
         });
     }
+    // Track TikTok ViewContent event
+    trackTikTokEvent('ViewContent', {
+      contents: [
+        {
+          content_id: courseId,
+          content_type: 'product',
+          content_name: courseName,
+        },
+      ],
+      value: 100,
+      currency: 'USD',
+    });
+
     onSelectCourse(courseId);
   };
 
