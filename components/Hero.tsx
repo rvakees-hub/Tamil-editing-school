@@ -345,22 +345,11 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
       }
     }
 
-    // 3. Save lead payload in sessionStorage for Thank You page and set conversion flag
+    // 3. Save lead payload in sessionStorage for Thank You page
     try {
       sessionStorage.setItem('clipzy_last_lead', JSON.stringify(submissionPayload));
-      sessionStorage.setItem('clipzy_conversion_pending', 'true');
     } catch (err) {
       console.error('Error saving lead to sessionStorage:', err);
-    }
-
-    // 4. Track TikTok Pixel conversion event
-    try {
-      if (typeof window !== 'undefined' && (window as Record<string, unknown>).ttq) {
-        const ttq = (window as Record<string, unknown>).ttq as { track: (event: string, params?: Record<string, unknown>) => void };
-        ttq.track('SubmitApplication', { content_name: 'Lead Application' });
-      }
-    } catch (err) {
-      console.warn('TikTok pixel tracking error:', err);
     }
 
     setIsSubmitting(false);

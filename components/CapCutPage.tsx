@@ -199,26 +199,44 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
       console.error('Error saving local capcut lead:', err);
     }
 
-    // 2. Try sending to SheetDB if reachable (using no-cors to prevent browser CORS network errors)
+    // 2. Try sending to SheetDB if reachable using a hidden form submission to prevent CORS/Failed to fetch network errors
     const SHEETDB_URL = 'https://sheetdb.io/api/v1/ccdajtboqrtax';
     try {
-      await fetch(SHEETDB_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          data: {
-            Name: formData.name,
-            Email: formData.email,
-            Phone: formData.phone,
-            Date: submissionPayload.submittedAt
-          }
-        })
-      }).catch((error) => {
-        console.warn('SheetDB request bypassed or offline:', error);
+      const sheetForm = document.createElement('form');
+      sheetForm.method = 'POST';
+      sheetForm.action = SHEETDB_URL;
+      let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'gscript_hidden_iframe';
+        iframe.name = 'gscript_hidden_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+      sheetForm.target = 'gscript_hidden_iframe';
+
+      const payloadData = {
+        Name: formData.name,
+        Email: formData.email,
+        Phone: formData.phone,
+        Date: submissionPayload.submittedAt
+      };
+
+      Object.entries(payloadData).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = String(value || '');
+        sheetForm.appendChild(input);
       });
+
+      document.body.appendChild(sheetForm);
+      sheetForm.submit();
+      setTimeout(() => {
+        if (document.body.contains(sheetForm)) {
+          document.body.removeChild(sheetForm);
+        }
+      }, 1000);
     } catch (error) {
       console.warn('SheetDB request error handled:', error);
     }
