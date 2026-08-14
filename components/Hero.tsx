@@ -231,19 +231,23 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
   });
 
   useEffect(() => {
-    // Load Wistia scripts dynamically if needed
-    if (!document.querySelector('script[src*="fast.wistia.com/player.js"]')) {
-      const s1 = document.createElement('script');
-      s1.src = 'https://fast.wistia.com/player.js';
-      s1.async = true;
-      document.head.appendChild(s1);
-    }
-    if (!document.querySelector('script[src*="fast.wistia.com/embed/nsqv30rryo.js"]')) {
-      const s2 = document.createElement('script');
-      s2.src = 'https://fast.wistia.com/embed/nsqv30rryo.js';
-      s2.async = true;
-      s2.type = 'module';
-      document.head.appendChild(s2);
+    // Wistia player scripts are loaded via index.html. Safely check before adding.
+    try {
+      if (!document.querySelector('script[src*="fast.wistia.com/player.js"]')) {
+        const s1 = document.createElement('script');
+        s1.src = 'https://fast.wistia.com/player.js';
+        s1.async = true;
+        document.head.appendChild(s1);
+      }
+      if (!document.querySelector('script[src*="fast.wistia.com/embed/nsqv30rryo.js"]')) {
+        const s2 = document.createElement('script');
+        s2.src = 'https://fast.wistia.com/embed/nsqv30rryo.js';
+        s2.async = true;
+        s2.type = 'module';
+        document.head.appendChild(s2);
+      }
+    } catch {
+      // Ignore script insertion errors if running in restricted sandboxes
     }
   }, []);
 
@@ -411,20 +415,15 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
           />
         </div>
 
-        {/* Main Header Headline (Matching TrustedBy typography & color palette) */}
-        <div className="text-center max-w-4xl mx-auto mb-10 md:mb-14">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[70px] font-black tracking-tight text-brand-black leading-[1.08] font-serif">
-            More Views. More Leads
+        {/* Main Header Headline & Subheadline */}
+        <div className="text-center max-w-4xl mx-auto mb-8 md:mb-12">
+          <h1 className="text-[52px] sm:text-5xl md:text-6xl lg:text-[64px] font-black tracking-tight text-brand-black leading-[1.12] font-serif">
+            We Build Brands for <span className="text-brand-blue">Business Owners</span>
           </h1>
           
-          {/* Highlighted Badge: "More Revenue." */}
-          <div className="mt-2 md:mt-3 inline-block">
-            <div className="bg-brand-blue text-white px-7 py-2 md:px-10 md:py-3.5 rounded-2xl md:rounded-3xl shadow-xl shadow-sky-500/20 inline-flex items-center justify-center">
-              <span className="text-3xl sm:text-4xl md:text-5xl lg:text-[58px] font-black tracking-tight font-serif">
-                More Revenue.
-              </span>
-            </div>
-          </div>
+          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
+            We create high-quality business videos that help you get noticed, build trust, and grow your business.
+          </p>
         </div>
 
         {/* Video Card Container */}
