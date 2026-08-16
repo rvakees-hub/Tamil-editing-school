@@ -17,9 +17,10 @@ interface SubmittedLead {
   email?: string;
   phone?: string;
   city?: string;
+  goal?: string;
+  investment?: string;
+  contentType?: string;
   startDate?: string;
-  readyToInvest?: string;
-  website?: string;
   submittedAt?: string;
 }
 
@@ -257,23 +258,13 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ onGoHome }) => {
               </div>
 
               <div className="space-y-1">
-                <span className="text-slate-400 text-xs">City / Location</span>
+                <span className="text-slate-400 text-xs">City / Country</span>
                 <p className="font-semibold text-white">{lead.city || 'N/A'}</p>
               </div>
 
-              <div className="space-y-1">
-                <span className="text-slate-400 text-xs">When to Start</span>
-                <p className="font-semibold text-emerald-400">{lead.startDate || 'N/A'}</p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-slate-400 text-xs">Ready to Invest (100k+)</span>
-                <p className="font-semibold text-emerald-400">{lead.readyToInvest || 'N/A'}</p>
-              </div>
-
               <div className="space-y-1 sm:col-span-2">
-                <span className="text-slate-400 text-xs">Website or Social Link</span>
-                <p className="font-semibold text-sky-400 break-all">{lead.website || 'N/A'}</p>
+                <span className="text-slate-400 text-xs">Primary Business Goal</span>
+                <p className="font-semibold text-emerald-400">{lead.goal || 'N/A'}</p>
               </div>
             </div>
           </div>

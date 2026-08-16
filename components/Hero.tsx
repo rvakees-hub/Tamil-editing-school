@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import React, { useState, useEffect } from 'react';
-import { Calendar, CheckCircle2, Sparkles, X, Check, FileSpreadsheet, Copy, Loader2, Download, MessageSquare } from 'lucide-react';
+import { Calendar, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, X, Check, FileSpreadsheet, Copy, Loader2, Download, MessageSquare } from 'lucide-react';
 import { identifyTikTokUser, trackTikTokEvent } from './tiktokPixel';
 
 declare global {
@@ -54,9 +54,12 @@ function handleRequest(e) {
         "Email",
         "Phone / WhatsApp",
         "City",
+        "Primary Goal",
         "Start Date",
-        "Ready to Invest (100k+)",
-        "Website / Social Link"
+        "Monthly Budget",
+        "Ready to Invest",
+        "Website / Social Link",
+        "Content Focus"
       ]);
     }
 
@@ -65,9 +68,12 @@ function handleRequest(e) {
     var email = data.email || data.Email || "";
     var phone = data.phone || data.Phone || "";
     var city = data.city || data.City || "";
+    var goal = data.goal || data.Goal || "";
     var startDate = data.startDate || data.StartDate || "";
+    var investment = data.investment || data.Investment || "";
     var readyToInvest = data.readyToInvest || data.ReadyToInvest || "";
     var website = data.website || data.Website || "";
+    var contentType = data.contentType || data.ContentType || data.course || "";
 
     sheet.appendRow([
       timestamp,
@@ -75,9 +81,12 @@ function handleRequest(e) {
       email,
       phone,
       city,
+      goal,
       startDate,
+      investment,
       readyToInvest,
-      website
+      website,
+      contentType
     ]);
 
     lock.releaseLock();
@@ -146,7 +155,8 @@ interface HeroProps {
 const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [formError, setFormError] = useState('');
+  const [currentStep, setCurrentStep] = useState(1);
+  const [stepError, setStepError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Google Sheets Apps Script State
@@ -177,16 +187,19 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
         alert('No saved lead submissions found in browser storage yet.');
         return;
       }
-      const headers = ["Timestamp", "Full Name", "Email", "Phone / WhatsApp", "City", "Start Date", "Ready to Invest (100k+)", "Website / Social Link"];
+      const headers = ["Timestamp", "Full Name", "Email", "Phone / WhatsApp", "City", "Primary Goal", "Start Date", "Monthly Budget", "Ready to Invest", "Website / Social Link", "Content Focus"];
       const rows = existing.map((item) => [
         `"${item.submittedAt || ''}"`,
         `"${(item.name || '').replace(/"/g, '""')}"`,
         `"${(item.email || '').replace(/"/g, '""')}"`,
         `"${(item.phone || '').replace(/"/g, '""')}"`,
         `"${(item.city || '').replace(/"/g, '""')}"`,
+        `"${(item.goal || '').replace(/"/g, '""')}"`,
         `"${(item.startDate || '').replace(/"/g, '""')}"`,
+        `"${(item.investment || '').replace(/"/g, '""')}"`,
         `"${(item.readyToInvest || '').replace(/"/g, '""')}"`,
-        `"${(item.website || '').replace(/"/g, '""')}"`
+        `"${(item.website || '').replace(/"/g, '""')}"`,
+        `"${(item.contentType || '').replace(/"/g, '""')}"`
       ]);
       const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
       const encodedUri = encodeURI(csvContent);
@@ -201,15 +214,16 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
     }
   };
 
-  // 7 Required Questions in 1 Single Application Form
   const [formData, setFormData] = useState({
-    // Q1 (Previous Q2)
+    // Step 1: 4 questions
+    goal: 'Get More Customers',
     startDate: 'Immediately',
-    // Q2 (Previous Q4)
+    investment: 'LKR 100,000–250,000',
     readyToInvest: 'Yes',
-    // Q3 (Previous Q5)
+    // Step 2: 2 questions
     website: '',
-    // Last 4 Details: Q4, Q5, Q6, Q7
+    contentType: 'Short-Form (Reels / TikTok / Shorts)',
+    // Step 3: 4 questions
     name: '',
     email: '',
     phone: '',
@@ -261,9 +275,12 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
       email: 'test@clipzy.agency',
       phone: '+94 77 000 0000',
       city: 'Colombo',
+      goal: 'Test Google Sheets Connection',
       startDate: 'Immediately',
+      investment: 'LKR 100,000–250,000',
       readyToInvest: 'Yes',
       website: 'https://clipzy.agency',
+      contentType: 'Short-Form Video',
     };
 
     try {
@@ -276,37 +293,34 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
     }
   };
 
+  const handleNextStep = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setStepError('');
+    if (currentStep === 1) {
+      if (!formData.goal || !formData.startDate || !formData.investment || !formData.readyToInvest) {
+        setStepError('Please complete all 4 questions before proceeding.');
+        return;
+      }
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      if (!formData.website.trim()) {
+        setStepError('Please provide your business website or social media link.');
+        return;
+      }
+      setCurrentStep(3);
+    }
+  };
+
+  const handlePrevStep = () => {
+    setStepError('');
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  };
+
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError('');
-
-    // Validate that all 7 required questions are filled
-    if (!formData.startDate) {
-      setFormError('Please answer Question 1: When are you looking to start?');
-      return;
-    }
-    if (!formData.readyToInvest) {
-      setFormError('Please answer Question 2: Are you ready to invest LKR 100,000+ per month?');
-      return;
-    }
-    if (!formData.website.trim()) {
-      setFormError('Please answer Question 3: Business Website or Social Media Link.');
-      return;
-    }
-    if (!formData.name.trim()) {
-      setFormError('Please answer Question 4: Full Name.');
-      return;
-    }
-    if (!formData.email.trim()) {
-      setFormError('Please answer Question 5: Email Address.');
-      return;
-    }
-    if (!formData.phone.trim()) {
-      setFormError('Please answer Question 6: WhatsApp / Phone Number.');
-      return;
-    }
-    if (!formData.city.trim()) {
-      setFormError('Please answer Question 7: City / Location.');
+    setStepError('');
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.city.trim()) {
+      setStepError('Please fill in your name, email, phone number, and city.');
       return;
     }
 
@@ -379,6 +393,13 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
     }
   };
 
+  // Calculate percentage
+  const getProgressPercentage = () => {
+    if (currentStep === 1) return 33;
+    if (currentStep === 2) return 66;
+    return 100;
+  };
+
   return (
     <section className="relative min-h-[85vh] bg-white text-brand-black pt-10 pb-20 md:pt-14 md:pb-28 overflow-hidden select-none">
       
@@ -426,10 +447,6 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                 {/* Form Headline & Subheadline */}
                 <div className="text-center mb-8">
                   <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-brand-blue bg-sky-50 px-3.5 py-1.5 rounded-full border border-sky-100">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Client Application
-                    </span>
-                    
                     <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-900 bg-amber-50 px-3.5 py-1.5 rounded-full border border-amber-200">
                       <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -438,6 +455,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                       <span>2 of 5 Spots Closed — Only 3 Left</span>
                     </span>
                   </div>
+
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-brand-black font-serif tracking-tight">
                     Apply to Work With Clipzy
                   </h2>
@@ -446,176 +464,348 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                   </p>
                 </div>
 
+                {/* Progress Bar & Percentage */}
+                <div className="mb-8 max-w-xl mx-auto">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                      Step {currentStep} of 3
+                    </span>
+                    <span className="text-xs font-black text-brand-blue bg-sky-50 px-2.5 py-0.5 rounded-md border border-sky-100">
+                      {getProgressPercentage()}% Completed
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
+                    <div 
+                      className="bg-gradient-to-r from-brand-blue to-sky-500 h-full rounded-full transition-all duration-500 ease-out shadow-sm"
+                      style={{ width: `${getProgressPercentage()}%` }}
+                    ></div>
+                  </div>
+                </div>
+
                 {/* Error Banner */}
-                {formError && (
-                  <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-semibold text-center animate-in fade-in">
-                    {formError}
+                {stepError && (
+                  <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-medium text-center">
+                    {stepError}
                   </div>
                 )}
 
-                {/* SINGLE UNIFIED 7-QUESTION APPLICATION FORM */}
-                <form onSubmit={handleFormSubmit} className="space-y-6">
-                  
-                  {/* Q1: When are you looking to start? (Previous Q2) */}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-2">
-                      1. When are you looking to start? <span className="text-brand-blue font-extrabold">*</span>
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      {[
-                        'Immediately',
-                        'Within 30 Days',
-                        'Within 3 Months',
-                        'Just Exploring'
-                      ].map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, startDate: option })}
-                          className={`flex items-center justify-center p-3.5 rounded-xl border text-center text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                            formData.startDate === option
-                              ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue font-bold'
-                              : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                          }`}
-                        >
-                          <span>{option}</span>
-                        </button>
-                      ))}
+                {/* STEP 1: 4 QUIZ QUESTIONS */}
+                {currentStep === 1 && (
+                  <div className="space-y-6 animate-in fade-in duration-300">
+                    
+                    {/* Q1: Biggest Goal */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-2">
+                        1. What is your biggest goal? <span className="text-brand-blue">*</span>
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {[
+                          'Get More Customers',
+                          'Build Brand Awareness',
+                          'Increase Sales',
+                          'Build My Personal Brand',
+                          'Launch a New Product',
+                          'Other'
+                        ].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, goal: option })}
+                            className={`flex items-center justify-between p-3.5 rounded-xl border text-left text-sm font-semibold transition-all cursor-pointer ${
+                              formData.goal === option
+                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
+                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <span>{option}</span>
+                            {formData.goal === option && (
+                              <Check className="w-4 h-4 text-brand-blue shrink-0 ml-2" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Q2: Are you ready to invest LKR 100,000+ per month? (Previous Q4) */}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-2">
-                      2. Are you ready to invest LKR 100,000+ per month? <span className="text-brand-blue font-extrabold">*</span>
-                    </label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {['Yes', 'Maybe', 'No'].map((option) => (
-                        <button
-                          key={option}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, readyToInvest: option })}
-                          className={`flex items-center justify-center p-3.5 rounded-xl border text-center text-sm font-bold transition-all cursor-pointer ${
-                            formData.readyToInvest === option
-                              ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
-                              : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                          }`}
-                        >
-                          <span>{option}</span>
-                        </button>
-                      ))}
+                    {/* Q2: When to start */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-2">
+                        2. When are you looking to start? <span className="text-brand-blue">*</span>
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {[
+                          'Immediately',
+                          'Within 30 Days',
+                          'Within 3 Months',
+                          'Just Exploring'
+                        ].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, startDate: option })}
+                            className={`flex items-center justify-center p-3 rounded-xl border text-center text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                              formData.startDate === option
+                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
+                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <span>{option}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Q3: Business Website or Social Media Link (Previous Q5) */}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-2">
-                      3. Business Website or Social Media Link <span className="text-brand-blue font-extrabold">*</span>
-                    </label>
-                    <input 
-                      type="text"
-                      required
-                      placeholder="e.g. Facebook, Instagram, TikTok, LinkedIn or Website URL"
-                      value={formData.website}
-                      onChange={e => setFormData({ ...formData, website: e.target.value })}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-400"
-                    />
-                  </div>
+                    {/* Q3: Monthly Investment */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-2">
+                        3. What's your monthly investment for video marketing? <span className="text-brand-blue">*</span>
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {[
+                          'Under LKR 50,000',
+                          'LKR 50,000–100,000',
+                          'LKR 100,000–250,000',
+                          'Above LKR 250,000'
+                        ].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, investment: option })}
+                            className={`flex items-center justify-between p-3.5 rounded-xl border text-left text-sm font-semibold transition-all cursor-pointer ${
+                              formData.investment === option
+                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
+                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <span>{option}</span>
+                            {formData.investment === option && (
+                              <Check className="w-4 h-4 text-brand-blue shrink-0 ml-2" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                  {/* Divider for Contact Details */}
-                  <div className="pt-2 pb-1 border-t border-slate-100 flex items-center justify-between">
-                    <p className="text-xs font-bold text-brand-blue uppercase tracking-wider">
-                      Contact Information
+                    {/* Q4: Ready to invest 100k+ */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-2">
+                        4. Are you ready to invest LKR 100,000+ per month? <span className="text-brand-blue">*</span>
+                      </label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {['Yes', 'Maybe', 'No'].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, readyToInvest: option })}
+                            className={`flex items-center justify-center p-3.5 rounded-xl border text-center text-sm font-bold transition-all cursor-pointer ${
+                              formData.readyToInvest === option
+                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
+                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <span>{option}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Step 1 Action */}
+                    <div className="pt-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleNextStep()}
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-blue hover:bg-sky-600 text-white font-extrabold text-base sm:text-lg px-10 py-4 rounded-xl shadow-lg shadow-sky-500/25 hover:shadow-xl transition-all cursor-pointer"
+                      >
+                        <span>Continue to Step 2</span>
+                        <ArrowRight className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* STEP 2: 2 QUESTIONS (Business & Content) */}
+                {currentStep === 2 && (
+                  <div className="space-y-6 animate-in fade-in duration-300">
+                    
+                    {/* Q5: Business Website or Social Media Link */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-2">
+                        5. Business Website or Social Media Link <span className="text-brand-blue">*</span>
+                      </label>
+                      <input 
+                        type="text"
+                        required
+                        placeholder="Facebook, Instagram, TikTok, LinkedIn or Website"
+                        value={formData.website}
+                        onChange={e => setFormData({ ...formData, website: e.target.value })}
+                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-400"
+                      />
+                    </div>
+
+                    {/* Q6: Primary Content Format Needed */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-2">
+                        6. What type of video content do you need? <span className="text-brand-blue">*</span>
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {[
+                          'Short-Form (Reels / TikTok / Shorts)',
+                          'Long-Form (YouTube / VSLs)',
+                          'Paid Ad Creatives',
+                          'Full Video Marketing Growth'
+                        ].map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, contentType: option })}
+                            className={`flex items-center justify-between p-3.5 rounded-xl border text-left text-sm font-semibold transition-all cursor-pointer ${
+                              formData.contentType === option
+                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
+                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            <span>{option}</span>
+                            {formData.contentType === option && (
+                              <Check className="w-4 h-4 text-brand-blue shrink-0 ml-2" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Step 2 Actions */}
+                    <div className="pt-4 flex items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={handlePrevStep}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Back</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleNextStep()}
+                        className="inline-flex items-center justify-center gap-2 bg-brand-blue hover:bg-sky-600 text-white font-extrabold text-base px-8 py-3.5 rounded-xl shadow-lg shadow-sky-500/25 hover:shadow-xl transition-all cursor-pointer"
+                      >
+                        <span>Continue to Final Step</span>
+                        <ArrowRight className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* STEP 3: 4 CONTACT QUESTIONS & SUBMIT */}
+                {currentStep === 3 && (
+                  <form onSubmit={handleFormSubmit} className="space-y-6 animate-in fade-in duration-300">
+                    
+                    <div className="bg-sky-50/60 border border-sky-100 rounded-2xl p-4 text-center">
+                      <p className="text-xs font-bold text-brand-blue uppercase tracking-wider">
+                        Almost Done! Step 3 of 3
+                      </p>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Where should our team send your custom Video Growth Plan?
+                      </p>
+                    </div>
+
+                    {/* Q7: Full Name */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-1.5">
+                        7. Full Name <span className="text-brand-blue">*</span>
+                      </label>
+                      <input 
+                        type="text"
+                        required
+                        placeholder="e.g. Alex Johnson"
+                        value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* Q8: Email Address */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-1.5">
+                        8. Email Address <span className="text-brand-blue">*</span>
+                      </label>
+                      <input 
+                        type="email"
+                        required
+                        placeholder="alex@company.com"
+                        value={formData.email}
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* Q9: WhatsApp / Phone Number */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-1.5">
+                        9. WhatsApp / Phone Number <span className="text-brand-blue">*</span>
+                      </label>
+                      <input 
+                        type="tel"
+                        required
+                        placeholder="e.g. +94 77 123 4567"
+                        value={formData.phone}
+                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* Q10: City / Location */}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-900 mb-1.5">
+                        10. City / Location <span className="text-brand-blue">*</span>
+                      </label>
+                      <input 
+                        type="text"
+                        required
+                        placeholder="e.g. Colombo, Kandy, Jaffna, or International"
+                        value={formData.city}
+                        onChange={e => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* Step 3 Actions */}
+                    <div className="pt-4 flex items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={handlePrevStep}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Back</span>
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="inline-flex items-center justify-center gap-2.5 bg-brand-blue hover:bg-sky-600 disabled:opacity-75 text-white font-extrabold text-base sm:text-lg px-8 py-4 rounded-xl shadow-xl shadow-sky-500/30 hover:shadow-2xl transition-all cursor-pointer"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                            <span>Submitting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Calendar className="w-5 h-5 text-white" />
+                            <span>Submit Application 🎉</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-slate-400 text-center mt-2">
+                      🔒 Zero spam. We respect your privacy and will never share your information.
                     </p>
-                    <span className="text-[11px] text-slate-400 font-medium">All 4 details required</span>
-                  </div>
 
-                  {/* Q4: Full Name */}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-1.5">
-                      4. Full Name <span className="text-brand-blue font-extrabold">*</span>
-                    </label>
-                    <input 
-                      type="text"
-                      required
-                      placeholder="e.g. Alex Johnson"
-                      value={formData.name}
-                      onChange={e => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-400"
-                    />
-                  </div>
+                  </form>
+                )}
 
-                  {/* Q5: Email Address */}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-1.5">
-                      5. Email Address <span className="text-brand-blue font-extrabold">*</span>
-                    </label>
-                    <input 
-                      type="email"
-                      required
-                      placeholder="alex@company.com"
-                      value={formData.email}
-                      onChange={e => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-400"
-                    />
-                  </div>
-
-                  {/* Q6: WhatsApp / Phone Number */}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-1.5">
-                      6. WhatsApp / Phone Number <span className="text-brand-blue font-extrabold">*</span>
-                    </label>
-                    <input 
-                      type="tel"
-                      required
-                      placeholder="e.g. +94 77 123 4567"
-                      value={formData.phone}
-                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-400"
-                    />
-                  </div>
-
-                  {/* Q7: City / Location */}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-1.5">
-                      7. City / Location <span className="text-brand-blue font-extrabold">*</span>
-                    </label>
-                    <input 
-                      type="text"
-                      required
-                      placeholder="e.g. Colombo, Kandy, Jaffna, or International"
-                      value={formData.city}
-                      onChange={e => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-400"
-                    />
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="pt-4 text-center">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full inline-flex items-center justify-center gap-2.5 bg-brand-blue hover:bg-sky-600 disabled:opacity-75 text-white font-extrabold text-base sm:text-lg px-8 py-4 rounded-xl shadow-xl shadow-sky-500/30 hover:shadow-2xl transition-all cursor-pointer"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 text-white animate-spin" />
-                          <span>Submitting Application...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Calendar className="w-5 h-5 text-white" />
-                          <span>Submit Application 🎉</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  <p className="text-xs text-slate-400 text-center mt-2">
-                    🔒 Zero spam. We respect your privacy and will never share your information.
-                  </p>
-
-                </form>
               </div>
             ) : (
               <div className="py-6 px-2 sm:px-4 text-center space-y-8 animate-in fade-in zoom-in-95 duration-300">
@@ -713,9 +903,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                     <div><span className="font-semibold text-slate-900">Email:</span> {formData.email}</div>
                     <div><span className="font-semibold text-slate-900">WhatsApp:</span> {formData.phone}</div>
                     <div><span className="font-semibold text-slate-900">Location:</span> {formData.city}</div>
-                    <div><span className="font-semibold text-slate-900">Start Date:</span> {formData.startDate}</div>
-                    <div><span className="font-semibold text-slate-900">Ready to Invest:</span> {formData.readyToInvest}</div>
-                    <div className="sm:col-span-2"><span className="font-semibold text-slate-900">Website / Link:</span> {formData.website}</div>
+                    <div className="sm:col-span-2"><span className="font-semibold text-slate-900">Primary Goal:</span> {formData.goal}</div>
                   </div>
                 </div>
 
@@ -725,10 +913,14 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                     type="button"
                     onClick={() => {
                       setFormSubmitted(false);
+                      setCurrentStep(1);
                       setFormData({
+                        goal: 'Get More Customers',
                         startDate: 'Immediately',
+                        investment: 'LKR 100,000–250,000',
                         readyToInvest: 'Yes',
                         website: '',
+                        contentType: 'Short-Form (Reels / TikTok / Shorts)',
                         name: '',
                         email: '',
                         phone: '',
