@@ -47,7 +47,11 @@ function handleRequest(e) {
     var lock = LockService.getScriptLock();
     lock.tryLock(10000);
 
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) {
+      throw new Error("No active spreadsheet found. Make sure this script was created via Extensions > Apps Script from inside your Google Sheet.");
+    }
+    var sheet = ss.getSheetByName("Leads") || ss.getActiveSheet() || ss.getSheets()[0];
     var data = {};
 
     // 1. Parse JSON payload if sent in request body
@@ -115,22 +119,66 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
   const url = targetUrl.trim();
   if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) return false;
 
+  // Build target URL with all payload keys as query parameters (for GET requests)
+  let targetWithParams = url;
   try {
-    // Append query parameters to ensure e.parameter is populated regardless of script parsing method
-    let targetWithParams = url;
-    try {
-      const urlObj = new URL(url);
-      Object.entries(payload).forEach(([key, val]) => {
-        urlObj.searchParams.set(key, String(val || ''));
-      });
-      targetWithParams = urlObj.toString();
-    } catch {
-      targetWithParams = url;
-    }
+    const urlObj = new URL(url);
+    Object.entries(payload).forEach(([key, val]) => {
+      urlObj.searchParams.set(key, String(val ?? ''));
+    });
+    // Add cache buster
+    urlObj.searchParams.set('_t', Date.now().toString());
+    targetWithParams = urlObj.toString();
+  } catch {
+    targetWithParams = url;
+  }
 
-    // 1. First try fetch with text/plain body & no-cors mode
-    // In Google Apps Script, text/plain doesn't trigger CORS preflight OPTIONS and delivers the payload to e.postData.contents
-    await fetch(targetWithParams, {
+  // MULTI-TRANSMISSION STRATEGY:
+  // Google Apps Script Web Apps often fail 302 redirects on POST with "Page not found / unable to open file",
+  // while GET requests to doGet(e) succeed reliably and bypass all CORS/redirect barriers.
+
+  // 1. Primary: GET fetch (no-cors mode)
+  try {
+    fetch(targetWithParams, {
+      method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-cache',
+    }).catch((err) => console.warn('GET fetch error:', err));
+  } catch {
+    // Ignore fetch init error
+  }
+
+  // 2. Secondary bulletproof beacon: Image ping (bypasses all CORS & iframe policies)
+  try {
+    const img = new Image();
+    img.src = targetWithParams;
+  } catch (err) {
+    console.warn('Image beacon ping error:', err);
+  }
+
+  // 3. Third beacon: Script tag injection
+  try {
+    const script = document.createElement('script');
+    script.src = targetWithParams;
+    script.async = true;
+    script.onload = () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+    script.onerror = () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+    document.body.appendChild(script);
+  } catch (err) {
+    console.warn('Script beacon error:', err);
+  }
+
+  // 4. Also attempt POST with text/plain JSON and hidden form as backup
+  try {
+    fetch(url, {
       method: 'POST',
       mode: 'no-cors',
       cache: 'no-cache',
@@ -138,86 +186,42 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
         'Content-Type': 'text/plain;charset=utf-8',
       },
       body: JSON.stringify(payload),
-    });
+    }).catch(() => {});
 
-    // Also submit via hidden form to ensure form-data reception for standard Google Script handlers
-    try {
-      let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
-      if (!iframe) {
-        iframe = document.createElement('iframe');
-        iframe.id = 'gscript_hidden_iframe';
-        iframe.name = 'gscript_hidden_iframe';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-      }
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = url;
-      form.target = 'gscript_hidden_iframe';
-
-      Object.entries(payload).forEach(([key, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = String(value || '');
-        form.appendChild(input);
-      });
-
-      document.body.appendChild(form);
-      form.submit();
-      setTimeout(() => {
-        if (document.body.contains(form)) {
-          document.body.removeChild(form);
-        }
-      }, 800);
-    } catch {
-      // Ignore hidden form fallback errors if fetch succeeded
+    let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'gscript_hidden_iframe';
+      iframe.name = 'gscript_hidden_iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
     }
 
-    return true;
-  } catch (fetchErr) {
-    console.warn('Direct fetch attempt failed, trying hidden form fallback:', fetchErr);
-    // 2. Fallback: native form post targeting a hidden iframe
-    return new Promise<boolean>((resolve) => {
-      try {
-        let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
-        if (!iframe) {
-          iframe = document.createElement('iframe');
-          iframe.id = 'gscript_hidden_iframe';
-          iframe.name = 'gscript_hidden_iframe';
-          iframe.style.display = 'none';
-          document.body.appendChild(iframe);
-        }
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = 'gscript_hidden_iframe';
 
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = url;
-        form.target = 'gscript_hidden_iframe';
-
-        Object.entries(payload).forEach(([key, value]) => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = String(value || '');
-          form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
-
-        setTimeout(() => {
-          if (document.body.contains(form)) {
-            document.body.removeChild(form);
-          }
-          resolve(true);
-        }, 600);
-      } catch (formErr) {
-        console.error('Fallback hidden form error:', formErr);
-        resolve(false);
-      }
+    Object.entries(payload).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = String(value || '');
+      form.appendChild(input);
     });
+
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(() => {
+      if (document.body.contains(form)) {
+        document.body.removeChild(form);
+      }
+    }, 800);
+  } catch {
+    // Ignore POST fallback error
   }
+
+  return true;
 };
 
 interface HeroProps {
