@@ -414,10 +414,10 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
 
         {/* Main Header Headline & Subheadline */}
         <div className="text-center max-w-4xl mx-auto mb-8 md:mb-12">
-          <h1 className="text-[52px] sm:text-5xl md:text-6xl lg:text-[70px] font-black tracking-tight text-slate-950 leading-[1.08] sm:leading-[1.12] font-sans">
-            <span className="block mb-2 sm:mb-3">More Views. More Leads</span>
-            <span className="inline-block bg-[#1AC1DD] text-slate-950 px-5 sm:px-8 py-1.5 sm:py-2.5 rounded-2xl shadow-lg shadow-[#1AC1DD]/30 font-black">
-              More Revenue.
+          <h1 className="font-black tracking-tight text-slate-950 leading-[1.15] font-sans flex flex-col items-center">
+            <span className="block text-[47px]">Build Your Personal Brand</span>
+            <span className="inline-block mt-2 sm:mt-3 text-[41px] whitespace-nowrap bg-[#1AC1DD] text-slate-950 px-5 sm:px-8 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-lg shadow-[#1AC1DD]/30 font-black">
+              in Just 90 Days.
             </span>
           </h1>
           
@@ -450,40 +450,13 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
             {!formSubmitted ? (
               <div>
                 {/* Form Headline & Subheadline */}
-                <div className="text-center mb-6">
+                <div className="text-center mb-8">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-brand-black font-serif tracking-tight">
                     Apply to Work With Clipzy
                   </h2>
                   <p className="text-sm sm:text-base text-slate-500 mt-2 max-w-xl mx-auto leading-relaxed font-sans">
                     Fill out the form below to start scaling your brand with high-performing short-form video.
                   </p>
-                </div>
-
-                {/* Google Sheets Sync Indicator & Configuration Bar */}
-                <div className="mb-6 p-3 sm:p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200/80 flex items-center justify-between flex-wrap gap-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${scriptUrl ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
-                      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${scriptUrl ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                    </span>
-                    <div className="flex items-center gap-1.5 font-sans">
-                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="text-xs font-bold text-slate-800 tracking-tight">
-                        {scriptUrl ? 'Google Sheets Sync: Connected' : 'Google Sheets Sync: Not Connected'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowSheetsModal(true)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 bg-white hover:bg-slate-100 hover:border-[#1AC1DD] border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs transition-all font-sans cursor-pointer"
-                    >
-                      <span>{scriptUrl ? 'Manage Sheet / Test' : 'Connect Google Sheet'}</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-[#1AC1DD]" />
-                    </button>
-                  </div>
                 </div>
 
                 {/* Error Banner */}
