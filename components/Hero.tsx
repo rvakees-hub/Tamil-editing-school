@@ -415,7 +415,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
         {/* Main Header Headline & Subheadline */}
         <div className="text-center max-w-4xl mx-auto mb-8 md:mb-12">
           <h1 className="font-black tracking-tight text-slate-950 leading-[1.15] font-sans flex flex-col items-center">
-            <span className="block text-[47px]">Build Your Personal Brand</span>
+            <span className="block text-[45px]">Build Your Personal Brand</span>
             <span className="inline-block mt-2 sm:mt-3 text-[41px] whitespace-nowrap bg-[#1AC1DD] text-slate-950 px-5 sm:px-8 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl shadow-lg shadow-[#1AC1DD]/30 font-black">
               in Just 90 Days.
             </span>
