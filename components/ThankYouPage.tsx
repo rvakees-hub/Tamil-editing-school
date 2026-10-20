@@ -17,6 +17,7 @@ interface SubmittedLead {
   email?: string;
   phone?: string;
   city?: string;
+  businessName?: string;
   goal?: string;
   investment?: string;
   contentType?: string;
@@ -248,23 +249,23 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ onGoHome }) => {
               </div>
 
               <div className="space-y-1">
+                <span className="text-slate-400 text-xs">Business Name</span>
+                <p className="font-semibold text-white">{lead.businessName || 'N/A'}</p>
+              </div>
+
+              <div className="space-y-1">
                 <span className="text-slate-400 text-xs">Email Address</span>
                 <p className="font-semibold text-white">{lead.email || 'N/A'}</p>
               </div>
 
               <div className="space-y-1">
-                <span className="text-slate-400 text-xs">WhatsApp / Phone</span>
+                <span className="text-slate-400 text-xs">Phone Number</span>
                 <p className="font-semibold text-white">{lead.phone || 'N/A'}</p>
               </div>
 
-              <div className="space-y-1">
-                <span className="text-slate-400 text-xs">City / Country</span>
-                <p className="font-semibold text-white">{lead.city || 'N/A'}</p>
-              </div>
-
               <div className="space-y-1 sm:col-span-2">
-                <span className="text-slate-400 text-xs">Primary Business Goal</span>
-                <p className="font-semibold text-emerald-400">{lead.goal || 'N/A'}</p>
+                <span className="text-slate-400 text-xs">City / Location</span>
+                <p className="font-semibold text-white">{lead.city || 'N/A'}</p>
               </div>
             </div>
           </div>

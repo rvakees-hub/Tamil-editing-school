@@ -1,6 +1,23 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import React, { useState, useEffect } from 'react';
-import { Calendar, ArrowRight, ArrowLeft, CheckCircle2, Sparkles, X, Check, FileSpreadsheet, Copy, Loader2, Download, MessageSquare } from 'lucide-react';
+import { 
+  ArrowRight, 
+  CheckCircle2, 
+  Sparkles, 
+  Check, 
+  FileSpreadsheet, 
+  Copy, 
+  Loader2, 
+  Download, 
+  MessageSquare,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Building2,
+  Lock,
+  X
+} from 'lucide-react';
 import { identifyTikTokUser, trackTikTokEvent } from './tiktokPixel';
 
 declare global {
@@ -9,6 +26,9 @@ declare global {
       'wistia-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         'media-id'?: string;
         aspect?: string | number;
+        'player-color'?: string;
+        playerColor?: string;
+        class?: string;
       };
     }
   }
@@ -47,33 +67,29 @@ function handleRequest(e) {
     }
 
     // Auto-create header row if sheet is completely empty
+    // Auto-create header row if sheet is completely empty
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow([
+      var headerRow = [
         "Timestamp",
         "Full Name",
         "Email",
-        "Phone / WhatsApp",
+        "Phone Number",
         "City",
-        "Primary Goal",
-        "Start Date",
-        "Monthly Budget",
-        "Ready to Invest",
-        "Website / Social Link",
-        "Content Focus"
-      ]);
+        "Business Name"
+      ];
+      sheet.appendRow(headerRow);
+      var headerRange = sheet.getRange(1, 1, 1, headerRow.length);
+      headerRange.setFontWeight("bold");
+      headerRange.setBackground("#1AC1DD");
+      headerRange.setFontColor("#0F172A");
     }
 
-    var timestamp = data.submittedAt || data.Date || new Date().toLocaleString();
-    var name = data.name || data.Name || "";
+    var timestamp = data.submittedAt || data.Timestamp || data.Date || new Date().toLocaleString();
+    var name = data.name || data.Name || data["Full Name"] || "";
     var email = data.email || data.Email || "";
-    var phone = data.phone || data.Phone || "";
+    var phone = data.phone || data.Phone || data["Phone Number"] || "";
     var city = data.city || data.City || "";
-    var goal = data.goal || data.Goal || "";
-    var startDate = data.startDate || data.StartDate || "";
-    var investment = data.investment || data.Investment || "";
-    var readyToInvest = data.readyToInvest || data.ReadyToInvest || "";
-    var website = data.website || data.Website || "";
-    var contentType = data.contentType || data.ContentType || data.course || "";
+    var businessName = data.businessName || data.BusinessName || data["Business Name"] || data.business_name || "";
 
     sheet.appendRow([
       timestamp,
@@ -81,18 +97,13 @@ function handleRequest(e) {
       email,
       phone,
       city,
-      goal,
-      startDate,
-      investment,
-      readyToInvest,
-      website,
-      contentType
+      businessName
     ]);
 
     lock.releaseLock();
 
     return ContentService
-      .createTextOutput(JSON.stringify({ result: "success" }))
+      .createTextOutput(JSON.stringify({ result: "success", status: 200 }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     return ContentService
@@ -101,51 +112,65 @@ function handleRequest(e) {
   }
 }`;
 
-const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<string, string>) => {
+const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<string, string>): Promise<boolean> => {
   const url = targetUrl.trim();
-  if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) return;
+  if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) return false;
 
-  // Use native form post targeting a hidden iframe.
-  // This bypasses browser CORS restrictions on Google Apps Script redirects and avoids "Failed to fetch" errors completely,
-  // while ensuring exactly 1 submission is sent without duplicates.
-  return new Promise<void>((resolve) => {
-    try {
-      let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
-      if (!iframe) {
-        iframe = document.createElement('iframe');
-        iframe.id = 'gscript_hidden_iframe';
-        iframe.name = 'gscript_hidden_iframe';
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-      }
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = url;
-      form.target = 'gscript_hidden_iframe';
-
-      Object.entries(payload).forEach(([key, value]) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = String(value || '');
-        form.appendChild(input);
-      });
-
-      document.body.appendChild(form);
-      form.submit();
-
-      setTimeout(() => {
-        if (document.body.contains(form)) {
-          document.body.removeChild(form);
+  try {
+    // 1. First try fetch with text/plain body & no-cors mode
+    // In Google Apps Script, text/plain doesn't trigger CORS preflight OPTIONS and delivers the payload to e.postData.contents
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8',
+      },
+      body: JSON.stringify(payload),
+    });
+    return true;
+  } catch (fetchErr) {
+    console.warn('Direct fetch attempt failed, trying hidden form fallback:', fetchErr);
+    // 2. Fallback: native form post targeting a hidden iframe
+    return new Promise<boolean>((resolve) => {
+      try {
+        let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.id = 'gscript_hidden_iframe';
+          iframe.name = 'gscript_hidden_iframe';
+          iframe.style.display = 'none';
+          document.body.appendChild(iframe);
         }
-        resolve();
-      }, 500);
-    } catch (err) {
-      console.error('Google Sheets submission error:', err);
-      resolve();
-    }
-  });
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        form.target = 'gscript_hidden_iframe';
+
+        Object.entries(payload).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = String(value || '');
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+
+        setTimeout(() => {
+          if (document.body.contains(form)) {
+            document.body.removeChild(form);
+          }
+          resolve(true);
+        }, 600);
+      } catch (formErr) {
+        console.error('Fallback hidden form error:', formErr);
+        resolve(false);
+      }
+    });
+  }
 };
 
 interface HeroProps {
@@ -155,7 +180,6 @@ interface HeroProps {
 const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   const [stepError, setStepError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -187,19 +211,14 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
         alert('No saved lead submissions found in browser storage yet.');
         return;
       }
-      const headers = ["Timestamp", "Full Name", "Email", "Phone / WhatsApp", "City", "Primary Goal", "Start Date", "Monthly Budget", "Ready to Invest", "Website / Social Link", "Content Focus"];
+      const headers = ["Timestamp", "Full Name", "Email", "Phone Number", "City", "Business Name"];
       const rows = existing.map((item) => [
         `"${item.submittedAt || ''}"`,
         `"${(item.name || '').replace(/"/g, '""')}"`,
         `"${(item.email || '').replace(/"/g, '""')}"`,
         `"${(item.phone || '').replace(/"/g, '""')}"`,
         `"${(item.city || '').replace(/"/g, '""')}"`,
-        `"${(item.goal || '').replace(/"/g, '""')}"`,
-        `"${(item.startDate || '').replace(/"/g, '""')}"`,
-        `"${(item.investment || '').replace(/"/g, '""')}"`,
-        `"${(item.readyToInvest || '').replace(/"/g, '""')}"`,
-        `"${(item.website || '').replace(/"/g, '""')}"`,
-        `"${(item.contentType || '').replace(/"/g, '""')}"`
+        `"${(item.businessName || '').replace(/"/g, '""')}"`
       ]);
       const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
       const encodedUri = encodeURI(csvContent);
@@ -215,19 +234,11 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
   };
 
   const [formData, setFormData] = useState({
-    // Step 1: 4 questions
-    goal: 'Get More Customers',
-    startDate: 'Immediately',
-    investment: 'LKR 100,000–250,000',
-    readyToInvest: 'Yes',
-    // Step 2: 2 questions
-    website: '',
-    contentType: 'Short-Form (Reels / TikTok / Shorts)',
-    // Step 3: 4 questions
     name: '',
     email: '',
     phone: '',
-    city: ''
+    city: '',
+    businessName: ''
   });
 
   useEffect(() => {
@@ -239,9 +250,9 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
         s1.async = true;
         document.head.appendChild(s1);
       }
-      if (!document.querySelector('script[src*="fast.wistia.com/embed/nsqv30rryo.js"]')) {
+      if (!document.querySelector('script[src*="fast.wistia.com/embed/bpd49n1j8u.js"]')) {
         const s2 = document.createElement('script');
-        s2.src = 'https://fast.wistia.com/embed/nsqv30rryo.js';
+        s2.src = 'https://fast.wistia.com/embed/bpd49n1j8u.js';
         s2.async = true;
         s2.type = 'module';
         document.head.appendChild(s2);
@@ -275,12 +286,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
       email: 'test@clipzy.agency',
       phone: '+94 77 000 0000',
       city: 'Colombo',
-      goal: 'Test Google Sheets Connection',
-      startDate: 'Immediately',
-      investment: 'LKR 100,000–250,000',
-      readyToInvest: 'Yes',
-      website: 'https://clipzy.agency',
-      contentType: 'Short-Form Video',
+      businessName: 'Clipzy Media',
     };
 
     try {
@@ -293,42 +299,40 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
     }
   };
 
-  const handleNextStep = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setStepError('');
-    if (currentStep === 1) {
-      if (!formData.goal || !formData.startDate || !formData.investment || !formData.readyToInvest) {
-        setStepError('Please complete all 4 questions before proceeding.');
-        return;
-      }
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      if (!formData.website.trim()) {
-        setStepError('Please provide your business website or social media link.');
-        return;
-      }
-      setCurrentStep(3);
-    }
-  };
-
-  const handlePrevStep = () => {
-    setStepError('');
-    setCurrentStep((prev) => Math.max(prev - 1, 1));
-  };
-
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStepError('');
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.city.trim()) {
-      setStepError('Please fill in your name, email, phone number, and city.');
+    if (
+      !formData.name.trim() || 
+      !formData.email.trim() || 
+      !formData.phone.trim() || 
+      !formData.city.trim() || 
+      !formData.businessName.trim()
+    ) {
+      setStepError('Please fill in all fields (Name, Email, Phone Number, City, and Business Name).');
       return;
     }
 
     setIsSubmitting(true);
 
+    const timestamp = new Date().toLocaleString();
     const submissionPayload = {
-      ...formData,
-      submittedAt: new Date().toLocaleString(),
+      name: formData.name.trim(),
+      Name: formData.name.trim(),
+      'Full Name': formData.name.trim(),
+      email: formData.email.trim(),
+      Email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      Phone: formData.phone.trim(),
+      'Phone Number': formData.phone.trim(),
+      city: formData.city.trim(),
+      City: formData.city.trim(),
+      businessName: formData.businessName.trim(),
+      BusinessName: formData.businessName.trim(),
+      'Business Name': formData.businessName.trim(),
+      submittedAt: timestamp,
+      Timestamp: timestamp,
+      Date: timestamp,
     };
 
     // 1. Always save locally as a bulletproof backup in browser
@@ -393,13 +397,6 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
     }
   };
 
-  // Calculate percentage
-  const getProgressPercentage = () => {
-    if (currentStep === 1) return 33;
-    if (currentStep === 2) return 66;
-    return 100;
-  };
-
   return (
     <section className="relative min-h-[85vh] bg-white text-brand-black pt-10 pb-20 md:pt-14 md:pb-28 overflow-hidden select-none">
       
@@ -417,12 +414,15 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
 
         {/* Main Header Headline & Subheadline */}
         <div className="text-center max-w-4xl mx-auto mb-8 md:mb-12">
-          <h1 className="text-[52px] sm:text-5xl md:text-6xl lg:text-[64px] font-black tracking-tight text-brand-black leading-[1.12] font-serif">
-            We Build Brands for <span className="text-brand-blue">Business Owners</span>
+          <h1 className="text-[52px] sm:text-5xl md:text-6xl lg:text-[70px] font-black tracking-tight text-slate-950 leading-[1.08] sm:leading-[1.12] font-sans">
+            <span className="block mb-2 sm:mb-3">More Views. More Leads</span>
+            <span className="inline-block bg-[#1AC1DD] text-slate-950 px-5 sm:px-8 py-1.5 sm:py-2.5 rounded-2xl shadow-lg shadow-[#1AC1DD]/30 font-black">
+              More Revenue.
+            </span>
           </h1>
           
           <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
-            We create high-quality business videos that help you get noticed, build trust, and grow your business.
+            We create high-converting business videos that turn attention into paying clients.
           </p>
         </div>
 
@@ -430,55 +430,59 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
         <div className="relative max-w-4xl mx-auto">
           {/* Card Frame with 7px rounded corners & shadow */}
           <div className="relative rounded-[7px] overflow-hidden bg-slate-900 shadow-[0_25px_70px_-15px_rgba(15,23,42,0.25)] border border-slate-200">
-            <wistia-player media-id="nsqv30rryo" aspect="1.7777777777777777" class="w-full block rounded-[7px] overflow-hidden"></wistia-player>
+            <wistia-player 
+              media-id="bpd49n1j8u" 
+              aspect="1.7777777777777777" 
+              player-color="1AC1DD"
+              class="w-full block rounded-[7px] overflow-hidden"
+            ></wistia-player>
           </div>
         </div>
 
-        {/* Multi-Step Lead Application Form Section below the video */}
+        {/* Lead Application Form Section below the video */}
         <div id="application-form" className="mt-10 md:mt-16 max-w-3xl mx-auto w-full scroll-mt-10">
           
           <div className="bg-white rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl shadow-slate-200/80 border border-slate-200/90 relative overflow-hidden">
             
             {/* Top decorative accent bar */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-blue via-sky-500 to-blue-600"></div>
+            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-brand-blue via-sky-400 to-[#1AC1DD]"></div>
 
             {!formSubmitted ? (
               <div>
                 {/* Form Headline & Subheadline */}
-                <div className="text-center mb-8">
-                  <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-900 bg-amber-50 px-3.5 py-1.5 rounded-full border border-amber-200">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                      </span>
-                      <span>2 of 5 Spots Closed — Only 3 Left</span>
-                    </span>
-                  </div>
-
+                <div className="text-center mb-6">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-brand-black font-serif tracking-tight">
                     Apply to Work With Clipzy
                   </h2>
-                  <p className="text-sm sm:text-base text-slate-500 mt-2 max-w-xl mx-auto leading-relaxed">
-                    We strictly work with only <strong>5 exclusive clients per month</strong>. 2 spots are already booked — complete this application now to claim 1 of the 3 remaining spots.
+                  <p className="text-sm sm:text-base text-slate-500 mt-2 max-w-xl mx-auto leading-relaxed font-sans">
+                    Fill out the form below to start scaling your brand with high-performing short-form video.
                   </p>
                 </div>
 
-                {/* Progress Bar & Percentage */}
-                <div className="mb-8 max-w-xl mx-auto">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-                      Step {currentStep} of 3
+                {/* Google Sheets Sync Indicator & Configuration Bar */}
+                <div className="mb-6 p-3 sm:p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200/80 flex items-center justify-between flex-wrap gap-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${scriptUrl ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${scriptUrl ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                     </span>
-                    <span className="text-xs font-black text-brand-blue bg-sky-50 px-2.5 py-0.5 rounded-md border border-sky-100">
-                      {getProgressPercentage()}% Completed
-                    </span>
+                    <div className="flex items-center gap-1.5 font-sans">
+                      <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="text-xs font-bold text-slate-800 tracking-tight">
+                        {scriptUrl ? 'Google Sheets Sync: Connected' : 'Google Sheets Sync: Not Connected'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
-                    <div 
-                      className="bg-gradient-to-r from-brand-blue to-sky-500 h-full rounded-full transition-all duration-500 ease-out shadow-sm"
-                      style={{ width: `${getProgressPercentage()}%` }}
-                    ></div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowSheetsModal(true)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 bg-white hover:bg-slate-100 hover:border-[#1AC1DD] border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs transition-all font-sans cursor-pointer"
+                    >
+                      <span>{scriptUrl ? 'Manage Sheet / Test' : 'Connect Google Sheet'}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-[#1AC1DD]" />
+                    </button>
                   </div>
                 </div>
 
@@ -489,322 +493,131 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                   </div>
                 )}
 
-                {/* STEP 1: 4 QUIZ QUESTIONS */}
-                {currentStep === 1 && (
-                  <div className="space-y-6 animate-in fade-in duration-300">
-                    
-                    {/* Q1: Biggest Goal */}
+                {/* Direct 5-Input Application Form */}
+                <form onSubmit={handleFormSubmit} className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                    {/* 1. Name */}
                     <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-2">
-                        1. What is your biggest goal? <span className="text-brand-blue">*</span>
+                      <label className="block text-xs sm:text-sm font-bold text-slate-900 mb-1.5 ml-1">
+                        Name <span className="text-[#1AC1DD] font-bold">*</span>
                       </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {[
-                          'Get More Customers',
-                          'Build Brand Awareness',
-                          'Increase Sales',
-                          'Build My Personal Brand',
-                          'Launch a New Product',
-                          'Other'
-                        ].map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, goal: option })}
-                            className={`flex items-center justify-between p-3.5 rounded-xl border text-left text-sm font-semibold transition-all cursor-pointer ${
-                              formData.goal === option
-                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
-                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                            }`}
-                          >
-                            <span>{option}</span>
-                            {formData.goal === option && (
-                              <Check className="w-4 h-4 text-brand-blue shrink-0 ml-2" />
-                            )}
-                          </button>
-                        ))}
+                      <div className="relative group">
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#1AC1DD] transition-colors" />
+                        <input 
+                          type="text" 
+                          name="name"
+                          required
+                          placeholder="Enter your full name"
+                          value={formData.name}
+                          onChange={e => setFormData({ ...formData, name: e.target.value })}
+                          className="w-full bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-[#1AC1DD] focus:ring-4 focus:ring-[#1AC1DD]/10 rounded-xl pl-10 pr-4 py-3 sm:py-3.5 text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:outline-none transition-all shadow-xs"
+                        />
                       </div>
                     </div>
 
-                    {/* Q2: When to start */}
+                    {/* 2. Business Name */}
                     <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-2">
-                        2. When are you looking to start? <span className="text-brand-blue">*</span>
+                      <label className="block text-xs sm:text-sm font-bold text-slate-900 mb-1.5 ml-1">
+                        Business Name <span className="text-[#1AC1DD] font-bold">*</span>
                       </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                        {[
-                          'Immediately',
-                          'Within 30 Days',
-                          'Within 3 Months',
-                          'Just Exploring'
-                        ].map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, startDate: option })}
-                            className={`flex items-center justify-center p-3 rounded-xl border text-center text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                              formData.startDate === option
-                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
-                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                            }`}
-                          >
-                            <span>{option}</span>
-                          </button>
-                        ))}
+                      <div className="relative group">
+                        <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#1AC1DD] transition-colors" />
+                        <input 
+                          type="text" 
+                          name="businessName"
+                          required
+                          placeholder="e.g. Acme Studio, Nova Clinic"
+                          value={formData.businessName}
+                          onChange={e => setFormData({ ...formData, businessName: e.target.value })}
+                          className="w-full bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-[#1AC1DD] focus:ring-4 focus:ring-[#1AC1DD]/10 rounded-xl pl-10 pr-4 py-3 sm:py-3.5 text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:outline-none transition-all shadow-xs"
+                        />
                       </div>
                     </div>
 
-                    {/* Q3: Monthly Investment */}
+                    {/* 3. Email */}
                     <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-2">
-                        3. What's your monthly investment for video marketing? <span className="text-brand-blue">*</span>
+                      <label className="block text-xs sm:text-sm font-bold text-slate-900 mb-1.5 ml-1">
+                        Email <span className="text-[#1AC1DD] font-bold">*</span>
                       </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {[
-                          'Under LKR 50,000',
-                          'LKR 50,000–100,000',
-                          'LKR 100,000–250,000',
-                          'Above LKR 250,000'
-                        ].map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, investment: option })}
-                            className={`flex items-center justify-between p-3.5 rounded-xl border text-left text-sm font-semibold transition-all cursor-pointer ${
-                              formData.investment === option
-                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
-                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                            }`}
-                          >
-                            <span>{option}</span>
-                            {formData.investment === option && (
-                              <Check className="w-4 h-4 text-brand-blue shrink-0 ml-2" />
-                            )}
-                          </button>
-                        ))}
+                      <div className="relative group">
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#1AC1DD] transition-colors" />
+                        <input 
+                          type="email" 
+                          name="email"
+                          required
+                          placeholder="you@company.com"
+                          value={formData.email}
+                          onChange={e => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-[#1AC1DD] focus:ring-4 focus:ring-[#1AC1DD]/10 rounded-xl pl-10 pr-4 py-3 sm:py-3.5 text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:outline-none transition-all shadow-xs"
+                        />
                       </div>
                     </div>
 
-                    {/* Q4: Ready to invest 100k+ */}
+                    {/* 4. Phone Number */}
                     <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-2">
-                        4. Are you ready to invest LKR 100,000+ per month? <span className="text-brand-blue">*</span>
+                      <label className="block text-xs sm:text-sm font-bold text-slate-900 mb-1.5 ml-1">
+                        Phone Number <span className="text-[#1AC1DD] font-bold">*</span>
                       </label>
-                      <div className="grid grid-cols-3 gap-3">
-                        {['Yes', 'Maybe', 'No'].map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, readyToInvest: option })}
-                            className={`flex items-center justify-center p-3.5 rounded-xl border text-center text-sm font-bold transition-all cursor-pointer ${
-                              formData.readyToInvest === option
-                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
-                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                            }`}
-                          >
-                            <span>{option}</span>
-                          </button>
-                        ))}
+                      <div className="relative group">
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#1AC1DD] transition-colors" />
+                        <input 
+                          type="tel" 
+                          name="phone"
+                          required
+                          placeholder="e.g. +94 77 123 4567"
+                          value={formData.phone}
+                          onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                          className="w-full bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-[#1AC1DD] focus:ring-4 focus:ring-[#1AC1DD]/10 rounded-xl pl-10 pr-4 py-3 sm:py-3.5 text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:outline-none transition-all shadow-xs"
+                        />
                       </div>
                     </div>
 
-                    {/* Step 1 Action */}
-                    <div className="pt-4 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleNextStep()}
-                        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-blue hover:bg-sky-600 text-white font-extrabold text-base sm:text-lg px-10 py-4 rounded-xl shadow-lg shadow-sky-500/25 hover:shadow-xl transition-all cursor-pointer"
-                      >
-                        <span>Continue to Step 2</span>
-                        <ArrowRight className="w-5 h-5" />
-                      </button>
+                    {/* 5. City */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs sm:text-sm font-bold text-slate-900 mb-1.5 ml-1">
+                        City <span className="text-[#1AC1DD] font-bold">*</span>
+                      </label>
+                      <div className="relative group">
+                        <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-[#1AC1DD] transition-colors" />
+                        <input 
+                          type="text" 
+                          name="city"
+                          required
+                          placeholder="e.g. Colombo, Kandy, Jaffna, or International"
+                          value={formData.city}
+                          onChange={e => setFormData({ ...formData, city: e.target.value })}
+                          className="w-full bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 focus:border-[#1AC1DD] focus:ring-4 focus:ring-[#1AC1DD]/10 rounded-xl pl-10 pr-4 py-3 sm:py-3.5 text-slate-900 text-sm font-medium placeholder:text-slate-400 focus:outline-none transition-all shadow-xs"
+                        />
+                      </div>
                     </div>
-
                   </div>
-                )}
 
-                {/* STEP 2: 2 QUESTIONS (Business & Content) */}
-                {currentStep === 2 && (
-                  <div className="space-y-6 animate-in fade-in duration-300">
-                    
-                    {/* Q5: Business Website or Social Media Link */}
-                    <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-2">
-                        5. Business Website or Social Media Link <span className="text-brand-blue">*</span>
-                      </label>
-                      <input 
-                        type="text"
-                        required
-                        placeholder="Facebook, Instagram, TikTok, LinkedIn or Website"
-                        value={formData.website}
-                        onChange={e => setFormData({ ...formData, website: e.target.value })}
-                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all placeholder:text-slate-400"
-                      />
-                    </div>
-
-                    {/* Q6: Primary Content Format Needed */}
-                    <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-2">
-                        6. What type of video content do you need? <span className="text-brand-blue">*</span>
-                      </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {[
-                          'Short-Form (Reels / TikTok / Shorts)',
-                          'Long-Form (YouTube / VSLs)',
-                          'Paid Ad Creatives',
-                          'Full Video Marketing Growth'
-                        ].map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, contentType: option })}
-                            className={`flex items-center justify-between p-3.5 rounded-xl border text-left text-sm font-semibold transition-all cursor-pointer ${
-                              formData.contentType === option
-                                ? 'bg-sky-50/80 border-brand-blue text-brand-blue shadow-sm ring-1 ring-brand-blue'
-                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
-                            }`}
-                          >
-                            <span>{option}</span>
-                            {formData.contentType === option && (
-                              <Check className="w-4 h-4 text-brand-blue shrink-0 ml-2" />
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Step 2 Actions */}
-                    <div className="pt-4 flex items-center justify-between gap-4">
-                      <button
-                        type="button"
-                        onClick={handlePrevStep}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-100 transition-colors cursor-pointer"
-                      >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Back</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleNextStep()}
-                        className="inline-flex items-center justify-center gap-2 bg-brand-blue hover:bg-sky-600 text-white font-extrabold text-base px-8 py-3.5 rounded-xl shadow-lg shadow-sky-500/25 hover:shadow-xl transition-all cursor-pointer"
-                      >
-                        <span>Continue to Final Step</span>
-                        <ArrowRight className="w-5 h-5" />
-                      </button>
-                    </div>
-
+                  {/* Submit Button */}
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full group relative inline-flex items-center justify-center gap-2.5 bg-[#1AC1DD] hover:bg-[#15adc7] disabled:opacity-75 text-slate-950 font-black text-base sm:text-lg px-8 py-4 rounded-xl shadow-xl shadow-[#1AC1DD]/25 hover:shadow-2xl hover:scale-[1.01] transition-all cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 text-slate-950 animate-spin" />
+                          <span>Submitting Application...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Submit Application 🎉</span>
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </button>
                   </div>
-                )}
 
-                {/* STEP 3: 4 CONTACT QUESTIONS & SUBMIT */}
-                {currentStep === 3 && (
-                  <form onSubmit={handleFormSubmit} className="space-y-6 animate-in fade-in duration-300">
-                    
-                    <div className="bg-sky-50/60 border border-sky-100 rounded-2xl p-4 text-center">
-                      <p className="text-xs font-bold text-brand-blue uppercase tracking-wider">
-                        Almost Done! Step 3 of 3
-                      </p>
-                      <p className="text-xs text-slate-600 mt-0.5">
-                        Where should our team send your custom Video Growth Plan?
-                      </p>
-                    </div>
-
-                    {/* Q7: Full Name */}
-                    <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-1.5">
-                        7. Full Name <span className="text-brand-blue">*</span>
-                      </label>
-                      <input 
-                        type="text"
-                        required
-                        placeholder="e.g. Alex Johnson"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all"
-                      />
-                    </div>
-
-                    {/* Q8: Email Address */}
-                    <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-1.5">
-                        8. Email Address <span className="text-brand-blue">*</span>
-                      </label>
-                      <input 
-                        type="email"
-                        required
-                        placeholder="alex@company.com"
-                        value={formData.email}
-                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all"
-                      />
-                    </div>
-
-                    {/* Q9: WhatsApp / Phone Number */}
-                    <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-1.5">
-                        9. WhatsApp / Phone Number <span className="text-brand-blue">*</span>
-                      </label>
-                      <input 
-                        type="tel"
-                        required
-                        placeholder="e.g. +94 77 123 4567"
-                        value={formData.phone}
-                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all"
-                      />
-                    </div>
-
-                    {/* Q10: City / Location */}
-                    <div>
-                      <label className="block text-sm font-bold text-slate-900 mb-1.5">
-                        10. City / Location <span className="text-brand-blue">*</span>
-                      </label>
-                      <input 
-                        type="text"
-                        required
-                        placeholder="e.g. Colombo, Kandy, Jaffna, or International"
-                        value={formData.city}
-                        onChange={e => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-sky-500/20 text-slate-900 text-sm bg-slate-50/50 focus:bg-white transition-all"
-                      />
-                    </div>
-
-                    {/* Step 3 Actions */}
-                    <div className="pt-4 flex items-center justify-between gap-4">
-                      <button
-                        type="button"
-                        onClick={handlePrevStep}
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-sm hover:bg-slate-100 transition-colors cursor-pointer"
-                      >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Back</span>
-                      </button>
-
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="inline-flex items-center justify-center gap-2.5 bg-brand-blue hover:bg-sky-600 disabled:opacity-75 text-white font-extrabold text-base sm:text-lg px-8 py-4 rounded-xl shadow-xl shadow-sky-500/30 hover:shadow-2xl transition-all cursor-pointer"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="w-5 h-5 text-white animate-spin" />
-                            <span>Submitting...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Calendar className="w-5 h-5 text-white" />
-                            <span>Submit Application 🎉</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <p className="text-xs text-slate-400 text-center mt-2">
-                      🔒 Zero spam. We respect your privacy and will never share your information.
-                    </p>
-
-                  </form>
-                )}
+                  <p className="text-[11px] sm:text-xs text-slate-400 text-center flex items-center justify-center gap-1.5 pt-1">
+                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Zero spam. We respect your privacy and will never share your information.</span>
+                  </p>
+                </form>
 
               </div>
             ) : (
@@ -900,10 +713,10 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-slate-600 pt-1">
                     <div><span className="font-semibold text-slate-900">Name:</span> {formData.name}</div>
+                    <div><span className="font-semibold text-slate-900">Business Name:</span> {formData.businessName}</div>
                     <div><span className="font-semibold text-slate-900">Email:</span> {formData.email}</div>
-                    <div><span className="font-semibold text-slate-900">WhatsApp:</span> {formData.phone}</div>
-                    <div><span className="font-semibold text-slate-900">Location:</span> {formData.city}</div>
-                    <div className="sm:col-span-2"><span className="font-semibold text-slate-900">Primary Goal:</span> {formData.goal}</div>
+                    <div><span className="font-semibold text-slate-900">Phone:</span> {formData.phone}</div>
+                    <div className="sm:col-span-2"><span className="font-semibold text-slate-900">City / Location:</span> {formData.city}</div>
                   </div>
                 </div>
 
@@ -913,18 +726,12 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                     type="button"
                     onClick={() => {
                       setFormSubmitted(false);
-                      setCurrentStep(1);
                       setFormData({
-                        goal: 'Get More Customers',
-                        startDate: 'Immediately',
-                        investment: 'LKR 100,000–250,000',
-                        readyToInvest: 'Yes',
-                        website: '',
-                        contentType: 'Short-Form (Reels / TikTok / Shorts)',
                         name: '',
                         email: '',
                         phone: '',
-                        city: ''
+                        city: '',
+                        businessName: ''
                       });
                     }}
                     className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-bold text-sm transition-colors cursor-pointer"
@@ -951,52 +758,56 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-                <FileSpreadsheet className="w-5 h-5" />
+            <div className="flex items-center gap-3.5 mb-5 pb-4 border-b border-slate-100">
+              <div className="w-12 h-12 rounded-2xl bg-[#1AC1DD]/10 border border-[#1AC1DD]/25 flex items-center justify-center text-[#1AC1DD] shrink-0">
+                <FileSpreadsheet className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-brand-black font-serif">Connect Google Sheets</h3>
-                <p className="text-xs text-slate-500">Automatically sync form submissions into your Google Sheet via Google Apps Script</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-brand-black font-serif tracking-tight">
+                  Connect Form with Google Sheets
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 font-sans mt-0.5">
+                  Real-time sync to your Google Spreadsheet via Google Apps Script Web App
+                </p>
               </div>
             </div>
 
-            <div className="space-y-6 text-slate-700 text-sm">
+            <div className="space-y-6 text-slate-700 text-sm font-sans">
               {/* Web App URL Input */}
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
-                <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Google Apps Script Web App URL
+              <div className="bg-slate-50/80 border border-slate-200/90 p-5 rounded-2xl space-y-3.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-900 font-sans">
+                  Google Apps Script Web App URL <span className="text-[#1AC1DD] font-bold">*</span>
                 </label>
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex flex-col sm:flex-row gap-2.5">
                   <input 
                     type="url"
-                    placeholder="https://script.google.com/macros/s/AKfycbx.../exec"
+                    placeholder="https://script.google.com/macros/s/AKfycb.../exec"
                     value={inputUrl}
                     onChange={(e) => setInputUrl(e.target.value)}
-                    className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-brand-blue text-xs text-slate-900 font-mono"
+                    className="flex-1 px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-[#1AC1DD] focus:ring-4 focus:ring-[#1AC1DD]/10 text-xs sm:text-sm text-slate-900 font-mono transition-all"
                   />
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={handleSaveScriptUrl}
-                      className="px-4 py-2.5 bg-brand-blue hover:bg-sky-600 text-white font-bold text-xs rounded-xl transition-colors shrink-0"
+                      className="px-5 py-3 bg-[#1AC1DD] hover:bg-[#15adc7] text-slate-950 font-black text-xs sm:text-sm rounded-xl shadow-md shadow-[#1AC1DD]/20 transition-all font-sans shrink-0 cursor-pointer"
                     >
-                      Save
+                      Save URL
                     </button>
                     <button
                       type="button"
                       onClick={handleTestSubmission}
                       disabled={!inputUrl.trim() || testStatus === 'testing'}
-                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors shrink-0 flex items-center gap-1.5"
+                      className="px-5 py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm rounded-xl transition-all font-sans shrink-0 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                     >
-                      {testStatus === 'testing' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                      <span>Send Test Lead</span>
+                      {testStatus === 'testing' && <Loader2 className="w-4 h-4 animate-spin text-[#1AC1DD]" />}
+                      <span>{testStatus === 'testing' ? 'Testing...' : 'Send Test Lead'}</span>
                     </button>
                   </div>
                 </div>
 
                 {inputUrl.trim() && (inputUrl.includes('/dev') || inputUrl.includes('/edit') || !inputUrl.trim().endsWith('/exec')) && (
-                  <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-xl text-xs space-y-1">
+                  <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3.5 rounded-xl text-xs space-y-1 font-sans">
                     <p className="font-bold flex items-center gap-1.5 text-amber-950">
                       <span>⚠️ Make sure you copy the Web App URL:</span>
                     </p>
@@ -1010,82 +821,84 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                 )}
 
                 {testStatus === 'success' && (
-                  <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1">
-                    <CheckCircle2 className="w-4 h-4" /> Test submission sent successfully! Check your Google Sheet.
-                  </p>
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 font-sans animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Test lead transmitted successfully! Check your Google Sheet to verify the row.</span>
+                  </div>
                 )}
                 {testStatus === 'error' && (
-                  <p className="text-xs font-semibold text-red-600 mt-1">
-                    ❌ Failed to reach Google Apps Script URL. Ensure "Who has access" is set to "Anyone" and you copied the Web App URL ending in /exec.
-                  </p>
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-3.5 py-2.5 rounded-xl text-xs font-semibold font-sans animate-in fade-in">
+                    ❌ Failed to reach Google Apps Script. Please verify the URL ends in <code>/exec</code> and "Who has access" is set to <strong>Anyone</strong>.
+                  </div>
                 )}
               </div>
 
               {/* Local Submissions Backup Section */}
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="bg-slate-50/80 border border-slate-200/90 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-sans">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Browser Leads Backup ({localLeadsCount})
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-sans">
+                    Local Backup Storage ({localLeadsCount} Leads)
                   </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    All form submissions are also backed up locally in your browser session.
+                  <p className="text-xs text-slate-500 mt-1 font-sans">
+                    Every lead is also saved in browser storage as a redundant fallback.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleExportCSV}
                   disabled={localLeadsCount === 0}
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-2 shrink-0 cursor-pointer font-sans"
                 >
-                  <Download className="w-3.5 h-3.5" />
+                  <Download className="w-3.5 h-3.5 text-[#1AC1DD]" />
                   <span>Download CSV ({localLeadsCount})</span>
                 </button>
               </div>
 
               {/* Step by Step Instructions */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
-                  How to setup in Google Sheets (2 minutes)
+              <div className="space-y-3 font-sans">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 font-sans flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#1AC1DD]" />
+                  <span>How to connect in Google Sheets (2 minutes)</span>
                 </h4>
                 
-                <ol className="space-y-2.5 text-xs text-slate-600 list-decimal list-inside leading-relaxed">
+                <ol className="space-y-2 text-xs text-slate-600 list-decimal list-inside leading-relaxed font-sans">
                   <li>Open your Google Sheet (or create a new blank one).</li>
                   <li>Click <strong>Extensions</strong> → <strong>Apps Script</strong> from the top menu.</li>
                   <li>Clear any existing code in <code>Code.gs</code> and paste the script below:</li>
                 </ol>
 
                 {/* Script Code Block */}
-                <div className="relative bg-slate-900 text-slate-100 p-3.5 rounded-xl text-xs font-mono overflow-x-auto max-h-48 border border-slate-800">
+                <div className="relative bg-slate-900 text-slate-100 p-4 rounded-xl text-xs font-mono overflow-x-auto max-h-48 border border-slate-800 shadow-inner">
                   <button
                     type="button"
                     onClick={handleCopyCode}
-                    className="absolute top-2.5 right-2.5 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-sans font-bold flex items-center gap-1.5 border border-slate-700 transition-colors"
+                    className="absolute top-2.5 right-2.5 px-3.5 py-1.5 bg-[#1AC1DD] hover:bg-[#15adc7] text-slate-950 rounded-lg text-xs font-sans font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                   >
-                    {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                    <span>{copiedCode ? 'Copied!' : 'Copy Apps Script'}</span>
+                    {copiedCode ? <Check className="w-3.5 h-3.5 text-slate-950" /> : <Copy className="w-3.5 h-3.5 text-slate-950" />}
+                    <span>{copiedCode ? 'Copied to Clipboard!' : 'Copy Apps Script'}</span>
                   </button>
                   <pre className="pr-24">{APPS_SCRIPT_TEMPLATE_CODE}</pre>
                 </div>
 
-                <ol start={4} className="space-y-2.5 text-xs text-slate-600 list-decimal list-inside leading-relaxed pt-1">
+                <ol start={4} className="space-y-2 text-xs text-slate-600 list-decimal list-inside leading-relaxed pt-1 font-sans">
                   <li>Click <strong>Deploy</strong> → <strong>New deployment</strong> (top right).</li>
                   <li>Click the ⚙️ gear next to "Select type" and choose <strong>Web app</strong>.</li>
                   <li>
                     Set <strong>Execute as:</strong> <code>Me</code> <br />
                     Set <strong>Who has access:</strong> <code>Anyone</code> (CRITICAL: Must be "Anyone"!)
                   </li>
-                  <li>Click <strong>Deploy</strong>, grant permissions, and copy the <strong>Web App URL</strong> into the field above!</li>
+                  <li>Click <strong>Deploy</strong>, authorize permissions, and copy the <strong>Web App URL</strong> into the field above!</li>
                 </ol>
               </div>
 
               {/* Troubleshooting Tips Box */}
-              <div className="bg-sky-50/80 border border-sky-200 text-slate-800 p-4 rounded-2xl text-xs space-y-2">
-                <h5 className="font-extrabold text-sky-950 flex items-center gap-1.5">
+              <div className="bg-[#1AC1DD]/10 border border-[#1AC1DD]/25 text-slate-800 p-4 rounded-2xl text-xs space-y-2 font-sans">
+                <h5 className="font-extrabold text-slate-950 flex items-center gap-1.5 font-sans">
                   <span>💡 Sheet still empty after submitting? Check these 2 quick settings:</span>
                 </h5>
-                <ul className="list-disc list-inside space-y-1.5 text-slate-700 leading-relaxed">
+                <ul className="list-disc list-inside space-y-1.5 text-slate-700 leading-relaxed font-sans">
                   <li>
-                    <strong>Did you deploy a New Version?</strong> In Google Apps Script, after updating code in <code>Code.gs</code>, you <em>must</em> click <strong>Deploy</strong> → <strong>New deployment</strong> (or <strong>Manage deployments</strong> → ⚙️ Edit → <strong>New version</strong> → Deploy). Saving the code alone does NOT update the active Web App!
+                    <strong>Did you deploy a New Version?</strong> In Google Apps Script, after saving code in <code>Code.gs</code>, you <em>must</em> click <strong>Deploy</strong> → <strong>New deployment</strong> (or <strong>Manage deployments</strong> → ⚙️ Edit → <strong>New version</strong> → Deploy). Saving code alone does NOT update the active Web App!
                   </li>
                   <li>
                     <strong>Is "Who has access" set to "Anyone"?</strong> Ensure "Who has access" is set to <strong>Anyone</strong> (not "Only myself"). If set to "Only myself", submissions are blocked by Google authentication.
@@ -1097,7 +910,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                 <button
                   type="button"
                   onClick={() => setShowSheetsModal(false)}
-                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors"
+                  className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs sm:text-sm rounded-xl transition-colors font-sans cursor-pointer"
                 >
                   Done
                 </button>

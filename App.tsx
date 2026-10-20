@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from './components/TopBar';
 import Hero from './components/Hero';
-import TrustedBy from './components/TrustedBy';
 import Testimonials from './components/Testimonials';
+import TrustedBy from './components/TrustedBy';
 import Footer from './components/Footer';
 import ThankYouPage from './components/ThankYouPage';
 
@@ -53,11 +52,10 @@ const App: React.FC = () => {
 
   return (
     <div className="font-sans bg-white text-brand-black selection:bg-brand-blue selection:text-white">
-      <TopBar />
       <main className="relative overflow-hidden">
         <Hero onNavigateToThankYou={() => navigateTo('thank-you')} />
-        <TrustedBy />
         <Testimonials />
+        <TrustedBy />
         <Footer />
       </main>
     </div>
