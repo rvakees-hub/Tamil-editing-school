@@ -256,8 +256,9 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
 
     // 3. Also send to Google Apps Script URL if configured
     try {
-      const defaultUrl = 'https://script.google.com/macros/s/AKfycbzIpaybmD7fgf-BAuVtr2sPkOX-QGrBFL4YqtPC-kELKX1y6uC9pIIAwccp-fLk_UW3mA/exec';
-      const googleScriptUrl = localStorage.getItem('clipzy_google_apps_script_url') || import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || defaultUrl;
+      const defaultUrl = 'https://script.google.com/macros/s/AKfycbzljZkwSd9UbqTBhqQeSELIsuuN53h5wvjTBVSzyUAhKqlW8Lgr9skqVXhwwcxRpn98sA/exec';
+      const stored = localStorage.getItem('clipzy_google_apps_script_url');
+      const googleScriptUrl = (!stored || stored.includes('AKfycbzIpaybmD7fgf')) ? defaultUrl : (stored || import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || defaultUrl);
       if (googleScriptUrl.trim()) {
         const form = document.createElement('form');
         form.method = 'POST';

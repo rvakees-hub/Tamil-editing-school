@@ -67,7 +67,6 @@ function handleRequest(e) {
     }
 
     // Auto-create header row if sheet is completely empty
-    // Auto-create header row if sheet is completely empty
     if (sheet.getLastRow() === 0) {
       var headerRow = [
         "Timestamp",
@@ -117,9 +116,21 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
   if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) return false;
 
   try {
+    // Append query parameters to ensure e.parameter is populated regardless of script parsing method
+    let targetWithParams = url;
+    try {
+      const urlObj = new URL(url);
+      Object.entries(payload).forEach(([key, val]) => {
+        urlObj.searchParams.set(key, String(val || ''));
+      });
+      targetWithParams = urlObj.toString();
+    } catch {
+      targetWithParams = url;
+    }
+
     // 1. First try fetch with text/plain body & no-cors mode
     // In Google Apps Script, text/plain doesn't trigger CORS preflight OPTIONS and delivers the payload to e.postData.contents
-    await fetch(url, {
+    await fetch(targetWithParams, {
       method: 'POST',
       mode: 'no-cors',
       cache: 'no-cache',
@@ -128,6 +139,42 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
       },
       body: JSON.stringify(payload),
     });
+
+    // Also submit via hidden form to ensure form-data reception for standard Google Script handlers
+    try {
+      let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'gscript_hidden_iframe';
+        iframe.name = 'gscript_hidden_iframe';
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+      }
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = url;
+      form.target = 'gscript_hidden_iframe';
+
+      Object.entries(payload).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = String(value || '');
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+      setTimeout(() => {
+        if (document.body.contains(form)) {
+          document.body.removeChild(form);
+        }
+      }, 800);
+    } catch {
+      // Ignore hidden form fallback errors if fetch succeeded
+    }
+
     return true;
   } catch (fetchErr) {
     console.warn('Direct fetch attempt failed, trying hidden form fallback:', fetchErr);
@@ -184,10 +231,15 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Google Sheets Apps Script State
-  const USER_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIpaybmD7fgf-BAuVtr2sPkOX-QGrBFL4YqtPC-kELKX1y6uC9pIIAwccp-fLk_UW3mA/exec';
+  const USER_DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzljZkwSd9UbqTBhqQeSELIsuuN53h5wvjTBVSzyUAhKqlW8Lgr9skqVXhwwcxRpn98sA/exec';
   const [showSheetsModal, setShowSheetsModal] = useState(false);
   const [scriptUrl, setScriptUrl] = useState<string>(() => {
-    return localStorage.getItem('clipzy_google_apps_script_url') || import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || USER_DEFAULT_SCRIPT_URL;
+    const saved = localStorage.getItem('clipzy_google_apps_script_url');
+    if (!saved || saved.includes('AKfycbzIpaybmD7fgf')) {
+      localStorage.setItem('clipzy_google_apps_script_url', USER_DEFAULT_SCRIPT_URL);
+      return USER_DEFAULT_SCRIPT_URL;
+    }
+    return saved;
   });
   const [inputUrl, setInputUrl] = useState<string>(scriptUrl);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -590,6 +642,24 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                     <Lock className="w-3.5 h-3.5 text-slate-400" />
                     <span>Zero spam. We respect your privacy and will never share your information.</span>
                   </p>
+
+                  {/* Google Sheets Apps Script Setup Button */}
+                  <div className="pt-3.5 mt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5 text-xs font-sans">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${scriptUrl ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+                      <span className="font-semibold text-slate-700">
+                        {scriptUrl ? 'Google Sheet Connected' : 'Google Sheet: Not Configured'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowSheetsModal(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#1AC1DD]" />
+                      <span>{scriptUrl ? 'Manage Google Sheet / Test' : 'Connect Google Sheet'}</span>
+                    </button>
+                  </div>
                 </form>
 
               </div>
