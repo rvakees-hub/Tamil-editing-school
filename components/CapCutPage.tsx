@@ -193,6 +193,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     const submissionPayload = {
@@ -261,28 +262,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
       const googleScriptUrl = (!stored || stored.includes('AKfycbzIpaybmD7fgf')) ? defaultUrl : (stored || import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || defaultUrl);
       if (googleScriptUrl.trim()) {
         const scriptEndpoint = googleScriptUrl.trim();
-        // Prepare query string for bulletproof GET transmission
-        let targetWithParams = scriptEndpoint;
-        try {
-          const urlObj = new URL(scriptEndpoint);
-          Object.entries(submissionPayload).forEach(([key, val]) => {
-            urlObj.searchParams.set(key, String(val ?? ''));
-          });
-          urlObj.searchParams.set('_t', Date.now().toString());
-          targetWithParams = urlObj.toString();
-        } catch {
-          targetWithParams = scriptEndpoint;
-        }
-
-        // 1. Image beacon ping
-        try {
-          const img = new Image();
-          img.src = targetWithParams;
-        } catch {
-          // ignore
-        }
-
-        // 3. Hidden form fallback
+        // Single submission channel: Hidden form POST targeting isolated hidden iframe
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = scriptEndpoint;

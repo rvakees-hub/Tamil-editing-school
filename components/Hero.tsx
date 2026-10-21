@@ -94,6 +94,26 @@ function handleRequest(e) {
     var city = data.city || data.City || "";
     var businessName = data.businessName || data.BusinessName || data["Business Name"] || data.business_name || "";
 
+    // Deduplication guard: ignore if identical email or phone was already inserted recently
+    var lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      var checkStart = Math.max(2, lastRow - 15);
+      var numToCheck = lastRow - checkStart + 1;
+      var recentData = sheet.getRange(checkStart, 2, numToCheck, 3).getValues(); // [Name, Email, Phone]
+      var curEmail = String(email || '').trim().toLowerCase();
+      var curPhone = String(phone || '').trim().replace(/[^0-9]/g, '');
+      for (var r = 0; r < recentData.length; r++) {
+        var rowEmail = String(recentData[r][1] || '').trim().toLowerCase();
+        var rowPhone = String(recentData[r][2] || '').trim().replace(/[^0-9]/g, '');
+        if ((curEmail && rowEmail === curEmail) || (curPhone && rowPhone && rowPhone === curPhone)) {
+          lock.releaseLock();
+          return ContentService
+            .createTextOutput(JSON.stringify({ result: "success", status: 200, message: "Duplicate prevented" }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+
     sheet.appendRow([
       timestamp,
       name,
@@ -115,34 +135,31 @@ function handleRequest(e) {
   }
 }`;
 
+// Client-side submission debounce to prevent duplicate triggers
+const recentlySentLeads = new Map<string, number>();
+
 const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<string, string>): Promise<boolean> => {
   const url = targetUrl.trim();
   if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) return false;
 
-  // Build target URL with all payload keys as query parameters (for GET requests)
-  let targetWithParams = url;
-  try {
-    const urlObj = new URL(url);
-    Object.entries(payload).forEach(([key, val]) => {
-      urlObj.searchParams.set(key, String(val ?? ''));
+  // Deduplication signature: Name + Email + Phone
+  const sig = `${(payload.name || '').trim().toLowerCase()}_${(payload.email || '').trim().toLowerCase()}_${(payload.phone || '').trim().replace(/\D/g, '')}`;
+  const now = Date.now();
+  const lastTime = recentlySentLeads.get(sig);
+  if (lastTime && (now - lastTime) < 60000) {
+    console.log('Skipping duplicate submission for signature:', sig);
+    return true;
+  }
+  recentlySentLeads.set(sig, now);
+
+  // Clean old signatures
+  if (recentlySentLeads.size > 50) {
+    recentlySentLeads.forEach((time, key) => {
+      if (now - time > 120000) recentlySentLeads.delete(key);
     });
-    // Add cache buster
-    urlObj.searchParams.set('_t', Date.now().toString());
-    targetWithParams = urlObj.toString();
-  } catch {
-    targetWithParams = url;
   }
 
-  // TRANSMISSION STRATEGY (Non-fetch to avoid browser iframe CORS/redirect 'Failed to fetch' errors):
-  // 1. Image Beacon: Sends GET request to doGet(e) via browser native image loader
-  try {
-    const img = new Image();
-    img.src = targetWithParams;
-  } catch (err) {
-    console.warn('Image beacon error:', err);
-  }
-
-  // 2. Hidden Form Submission: Sends standard POST to Google Apps Script via hidden iframe
+  // Exactly ONE submission method: Hidden form POST targeting isolated hidden iframe
   try {
     let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
     if (!iframe) {
@@ -174,21 +191,11 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
         document.body.removeChild(form);
       }
     }, 1000);
+    return true;
   } catch (formErr) {
     console.warn('Hidden form submission error:', formErr);
+    return false;
   }
-
-  // 3. Optional navigator.sendBeacon
-  try {
-    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-      const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain;charset=utf-8' });
-      navigator.sendBeacon(targetWithParams, blob);
-    }
-  } catch {
-    // ignore
-  }
-
-  return true;
 };
 
 interface HeroProps {
@@ -324,6 +331,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setStepError('');
     if (
       !formData.name.trim() || 
