@@ -133,67 +133,24 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
     targetWithParams = url;
   }
 
-  // MULTI-TRANSMISSION STRATEGY:
-  // Google Apps Script Web Apps often fail 302 redirects on POST with "Page not found / unable to open file",
-  // while GET requests to doGet(e) succeed reliably and bypass all CORS/redirect barriers.
-
-  // 1. Primary: GET fetch (no-cors mode)
-  try {
-    fetch(targetWithParams, {
-      method: 'GET',
-      mode: 'no-cors',
-      cache: 'no-cache',
-    }).catch((err) => console.warn('GET fetch error:', err));
-  } catch {
-    // Ignore fetch init error
-  }
-
-  // 2. Secondary bulletproof beacon: Image ping (bypasses all CORS & iframe policies)
+  // TRANSMISSION STRATEGY (Non-fetch to avoid browser iframe CORS/redirect 'Failed to fetch' errors):
+  // 1. Image Beacon: Sends GET request to doGet(e) via browser native image loader
   try {
     const img = new Image();
     img.src = targetWithParams;
   } catch (err) {
-    console.warn('Image beacon ping error:', err);
+    console.warn('Image beacon error:', err);
   }
 
-  // 3. Third beacon: Script tag injection
+  // 2. Hidden Form Submission: Sends standard POST to Google Apps Script via hidden iframe
   try {
-    const script = document.createElement('script');
-    script.src = targetWithParams;
-    script.async = true;
-    script.onload = () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
-    script.onerror = () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
-    document.body.appendChild(script);
-  } catch (err) {
-    console.warn('Script beacon error:', err);
-  }
-
-  // 4. Also attempt POST with text/plain JSON and hidden form as backup
-  try {
-    fetch(url, {
-      method: 'POST',
-      mode: 'no-cors',
-      cache: 'no-cache',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8',
-      },
-      body: JSON.stringify(payload),
-    }).catch(() => {});
-
     let iframe = document.getElementById('gscript_hidden_iframe') as HTMLIFrameElement;
     if (!iframe) {
       iframe = document.createElement('iframe');
       iframe.id = 'gscript_hidden_iframe';
       iframe.name = 'gscript_hidden_iframe';
       iframe.style.display = 'none';
+      iframe.setAttribute('aria-hidden', 'true');
       document.body.appendChild(iframe);
     }
 
@@ -216,9 +173,19 @@ const sendPayloadToGoogleScript = async (targetUrl: string, payload: Record<stri
       if (document.body.contains(form)) {
         document.body.removeChild(form);
       }
-    }, 800);
+    }, 1000);
+  } catch (formErr) {
+    console.warn('Hidden form submission error:', formErr);
+  }
+
+  // 3. Optional navigator.sendBeacon
+  try {
+    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+      const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain;charset=utf-8' });
+      navigator.sendBeacon(targetWithParams, blob);
+    }
   } catch {
-    // Ignore POST fallback error
+    // ignore
   }
 
   return true;
@@ -646,24 +613,6 @@ const Hero: React.FC<HeroProps> = ({ onNavigateToThankYou }) => {
                     <Lock className="w-3.5 h-3.5 text-slate-400" />
                     <span>Zero spam. We respect your privacy and will never share your information.</span>
                   </p>
-
-                  {/* Google Sheets Apps Script Setup Button */}
-                  <div className="pt-3.5 mt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5 text-xs font-sans">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${scriptUrl ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
-                      <span className="font-semibold text-slate-700">
-                        {scriptUrl ? 'Google Sheet Connected' : 'Google Sheet: Not Configured'}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowSheetsModal(true)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors cursor-pointer"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-[#1AC1DD]" />
-                      <span>{scriptUrl ? 'Manage Google Sheet / Test' : 'Connect Google Sheet'}</span>
-                    </button>
-                  </div>
                 </form>
 
               </div>

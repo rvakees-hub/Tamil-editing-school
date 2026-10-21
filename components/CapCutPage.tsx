@@ -274,14 +274,7 @@ const CapCutPage: React.FC<CapCutPageProps> = ({ isModalOpen, setIsModalOpen }) 
           targetWithParams = scriptEndpoint;
         }
 
-        // 1. GET fetch
-        try {
-          fetch(targetWithParams, { method: 'GET', mode: 'no-cors', cache: 'no-cache' }).catch(() => {});
-        } catch {
-          // ignore
-        }
-
-        // 2. Image beacon ping
+        // 1. Image beacon ping
         try {
           const img = new Image();
           img.src = targetWithParams;
